@@ -36,24 +36,24 @@ include(FetchContent)
 
 
 ## Add Big-BWT
-# FetchContent_Declare(
-#   bigbwt
-#   GIT_REPOSITORY https://github.com/alshai/Big-BWT.git
-#   )
+FetchContent_Declare(
+  bigbwt
+  GIT_REPOSITORY https://github.com/alshai/Big-BWT.git
+  )
   
-# FetchContent_GetProperties(bigbwt)
-# if(NOT bigbwt_POPULATED)
-#   FetchContent_Populate(bigbwt)
-#   add_subdirectory(${bigbwt_SOURCE_DIR} ${bigbwt_BINARY_DIR})
+FetchContent_GetProperties(bigbwt)
+if(NOT bigbwt_POPULATED)
+  FetchContent_Populate(bigbwt)
+  add_subdirectory(${bigbwt_SOURCE_DIR} ${bigbwt_BINARY_DIR})
 
-#   # add_library(gsacak OBJECT ${bigbwt_SOURCE_DIR}/gsa/gsacak.c ${bigbwt_SOURCE_DIR}/gsa/gsacak.h)
-#   # target_include_directories(gsacak PUBLIC "${bigbwt_SOURCE_DIR}/gsa")
+  # add_library(gsacak OBJECT ${bigbwt_SOURCE_DIR}/gsa/gsacak.c ${bigbwt_SOURCE_DIR}/gsa/gsacak.h)
+  # target_include_directories(gsacak PUBLIC "${bigbwt_SOURCE_DIR}/gsa")
   
-#   # add_library(malloc_count OBJECT ${bigbwt_SOURCE_DIR}/malloc_count.c ${bigbwt_SOURCE_DIR}/malloc_count.h)
-#   # target_link_libraries(malloc_count dl)
-#   # target_include_directories(malloc_count PUBLIC "${bigbwt_SOURCE_DIR}")
+  # add_library(malloc_count OBJECT ${bigbwt_SOURCE_DIR}/malloc_count.c ${bigbwt_SOURCE_DIR}/malloc_count.h)
+  # target_link_libraries(malloc_count dl)
+  # target_include_directories(malloc_count PUBLIC "${bigbwt_SOURCE_DIR}")
   
-#   endif()
+  endif()
   
 ## Add gsacak
 FetchContent_Declare(
