@@ -17,9 +17,11 @@
 /*!
    \file pfp_lcp.hpp
    \brief pfp_lcp.hpp define and build the lcp from the prefix-free parsing.
+            Adapted by Vikram Shivakumar to compute Maximal Unique Matches (MUM) between sequences (12/20/2023)
    \author Massimiliano Rossi
    \date 01/07/2020
 */
+
 
 #ifndef _LCP_PFP_HH
 #define _LCP_PFP_HH

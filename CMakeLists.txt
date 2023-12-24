@@ -54,6 +54,6 @@ endif()
 add_subdirectory(include)
 add_subdirectory(src)
 
-install(TARGETS pfp_doc64 DESTINATION ${PROJECT_BINARY_DIR})
+install(TARGETS pfp_mum64 DESTINATION ${PROJECT_BINARY_DIR})
 install(TARGETS newscanNT.x pscan.x newscan.x 
         DESTINATION ${PROJECT_BINARY_DIR}/bin)

@@ -1,6 +1,7 @@
 /*
  * File: ref_builder.hpp
- * Description: Header for ref_builder.cpp that includes 
+ * Description: Originally written by Omar Ahmed in docprofiles: https://github.com/oma219/docprofiles/tree/main
+ *              Header for ref_builder.cpp that includes 
  *              definition of the RefBuilder class.
  * Date: August 31, 2022
  */

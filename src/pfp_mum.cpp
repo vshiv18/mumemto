@@ -1,14 +1,14 @@
 /*
- * File: pfp_doc.cpp
- * Description: Main file for building the document array profiles
- *              based on the prefix-free parse. This workflow is 
- *              based on the pfp_lcp.hpp developed by Massimiliano
- *              Rossi.
+ * File: pfp_mum.cpp
+ * Description: Heavily adapted from docprofiles: https://github.com/oma219/docprofiles/tree/main
+ *              Main file for building the prefix-free parse, and outputing MUMs along with r-index data structures (BWT/SA/LCP). 
+ *              This workflow is based on doc profiles by Omar Ahmed, 
+ *              which is in turn based on the pfp_lcp.hpp developed by Massimiliano Rossi.
  *
- * Date: August 30th, 2022
+ * Date: December 20th, 2023
  */
 
-#include <pfp_doc.hpp> 
+#include <pfp_mum.hpp> 
 #include <iostream>
 #include <fstream>
 #include <cstring>

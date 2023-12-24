@@ -4,6 +4,7 @@
  *              input reference file and determine the number of
  *              bp in each class.
  * Note: this is based on the ref_builder.cpp in the SPUMONI repo.
+ * Author: Omar Ahmed
  * Date: August 31, 2022
  */
 

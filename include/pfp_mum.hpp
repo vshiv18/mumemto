@@ -1,9 +1,10 @@
 /*
- * File: pfp_doc.hpp
- * Description: Header file for pfp_doc data-structure, contains the
- *              construction of the document profile data-structure
- *              and other needed structs for pfp_doc.cpp
- * Date: August 30th, 2022
+ * File: pfp_mum.hpp
+ * Description: Header file for pfp_mum, contains the
+ *              function headers and other needed structs 
+ *              for pfp_mum.cpp
+ *              Heavily adapted from docprofiles by Omar Ahmed: https://github.com/oma219/docprofiles/tree/main
+ * Date: December 20th, 2023
  */
 
 #ifndef PFP_DOC_H
