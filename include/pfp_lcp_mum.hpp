@@ -244,6 +244,9 @@ private:
     std::deque<size_t> doc_window;
     // dequeue for this, for first pass just find min every iteration
     std::deque<size_t> lcp_window;
+    // try the linear RMQ algorithm
+    std::deque<std::pair<size_t, size_t>> lcp_pq;
+
     std::deque<size_t> sa_window;
 
     // for window_docs, define an update that decrements the outgoing and increments the incoming doc
@@ -326,13 +329,21 @@ private:
         // add lcp to the queue to maintain window order
         lcp_window.push_back(lcp);
         left_lcp = lcp_window.front();
+
+        // update pq
+        if(!lcp_pq.empty() && lcp_pq.front().second <= (j - num_docs))
+            lcp_pq.pop_front();
+        while(!lcp_pq.empty() && lcp_pq.back().first > lcp)
+            lcp_pq.pop_back();
+        lcp_pq.push_back(std::pair<size_t, size_t>(lcp, j + 1));
     }
 
     inline size_t rmq_of_window()
     {
         // get min LCP in window from ordered set
         // *rmq_window.begin();
-        return *std::min_element(std::next(lcp_window.begin()), lcp_window.end());
+        // return *std::min_element(std::next(lcp_window.begin()), lcp_window.end());
+        return lcp_pq.front();
     }
     inline bool is_mum()
     {
