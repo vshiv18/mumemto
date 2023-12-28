@@ -343,7 +343,7 @@ private:
         // get min LCP in window from ordered set
         // *rmq_window.begin();
         // return *std::min_element(std::next(lcp_window.begin()), lcp_window.end());
-        return lcp_pq.front();
+        return lcp_pq.front().first;
     }
     inline bool is_mum()
     {
