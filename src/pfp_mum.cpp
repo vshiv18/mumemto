@@ -48,14 +48,14 @@ int build_main(int argc, char** argv) {
     if (ref_build.num_docs >= MAXDOCS)
         FATAL_ERROR("An index cannot be build over %ld documents, "
                     "please reduce to a max of 65,535 docs.", ref_build.num_docs);
-    if ((build_opts.use_taxcomp || build_opts.use_topk) 
-        && ref_build.num_docs < build_opts.numcolsintable)
-        FATAL_ERROR("the k provided is larger than the number of documents.");
+    // if ((build_opts.use_taxcomp || build_opts.use_topk) 
+    //     && ref_build.num_docs < build_opts.numcolsintable)
+    //     FATAL_ERROR("the k provided is larger than the number of documents.");
 
     // Check and make sure the document to extract is a valid id
-    if (build_opts.doc_to_extract > ref_build.num_docs) {
-        FATAL_ERROR("Document #%d was requested to be extracted,"
-                    " but there are only %d documents", build_opts.doc_to_extract, ref_build.num_docs);
+    // if (build_opts.doc_to_extract > ref_build.num_docs) {
+    //     FATAL_ERROR("Document #%d was requested to be extracted,"
+    //                 " but there are only %d documents", build_opts.doc_to_extract, ref_build.num_docs);
     }
 
     // Determine the paths to the BigBWT executables
@@ -79,12 +79,12 @@ int build_main(int argc, char** argv) {
 
     // Print info regarding the compression scheme being used
     std::cerr << "\n";
-    if (build_opts.use_taxcomp)
-        FORCE_LOG("build_main", "taxonomic compression of the doc profiles will be used");
-    else if (build_opts.use_topk)
-        FORCE_LOG("build_main", "top-k compression of the doc profile will be used");
-    else   
-        FORCE_LOG("build_main", "no compression scheme will be used for the doc profiles");
+    // if (build_opts.use_taxcomp)
+    //     FORCE_LOG("build_main", "taxonomic compression of the doc profiles will be used");
+    // else if (build_opts.use_topk)
+    //     FORCE_LOG("build_main", "top-k compression of the doc profile will be used");
+    // else   
+    //     FORCE_LOG("build_main", "no compression scheme will be used for the doc profiles");
 
     // Builds the BWT, SA, LCP, and document array profiles and writes to a file
     STATUS_LOG("build_main", "building bwt and doc profiles based on pfp");
@@ -112,7 +112,7 @@ void run_build_parse_cmd(PFPDocBuildOptions* build_opts, HelperPrograms* helper_
         command_stream << build_opts->output_ref << " ";
         command_stream << "-w " << build_opts->pfp_w;
         command_stream << " -p " << build_opts->hash_mod;
-        command_stream << " -t " << build_opts->threads;
+        // command_stream << " -t " << build_opts->threads;
     }
     else {
         std::string curr_exe = "";
@@ -203,7 +203,7 @@ void print_build_status_info(PFPDocBuildOptions* opts) {
     std::fprintf(stderr, "\tOutput ref path: %s\n", opts->output_ref.data());
     std::fprintf(stderr, "\tPFP window size: %d\n", opts->pfp_w);
     std::fprintf(stderr, "\tInclude rev-comp?: %d\n", opts->use_rcomp);
-    std::fprintf(stderr, "\tUse heuristics?: %d\n\n", opts->use_heuristics);
+    // std::fprintf(stderr, "\tUse heuristics?: %d\n\n", opts->use_heuristics);
 }
 
 void parse_build_options(int argc, char** argv, PFPDocBuildOptions* opts) {
@@ -214,11 +214,11 @@ void parse_build_options(int argc, char** argv, PFPDocBuildOptions* opts) {
         {"filelist",   required_argument, NULL,  'f'},
         {"output",       required_argument, NULL,  'o'},
         {"revcomp",   no_argument, NULL,  'r'},
-        {"taxcomp",   no_argument, NULL,  't'},
-        {"num-col",   required_argument, NULL,  'k'},
-        {"top-k",   no_argument, NULL,  'p'},
-        {"print-doc", required_argument, NULL, 'e'},
-        {"no-heuristic", no_argument, NULL, 'n'},
+        // {"taxcomp",   no_argument, NULL,  't'},
+        // {"num-col",   required_argument, NULL,  'k'},
+        // {"top-k",   no_argument, NULL,  'p'},
+        // {"print-doc", required_argument, NULL, 'e'},
+        // {"no-heuristic", no_argument, NULL, 'n'},
         {"modulus", required_argument, NULL, 'm'},
         {0, 0, 0,  0}
     };
@@ -232,11 +232,11 @@ void parse_build_options(int argc, char** argv, PFPDocBuildOptions* opts) {
             case 'o': opts->output_prefix.assign(optarg); break;
             case 'w': opts->pfp_w = std::atoi(optarg); break;
             case 'r': opts->use_rcomp = true; break;
-            case 't': opts->use_taxcomp = true; break;
-            case 'p': opts->use_topk = true; break;
-            case 'k': opts->numcolsintable = std::max(std::atoi(optarg), 2); break;
-            case 'e': opts->doc_to_extract = std::atoi(optarg); break;
-            case 'n': opts->use_heuristics = false; break;
+            // case 't': opts->use_taxcomp = true; break;
+            // case 'p': opts->use_topk = true; break;
+            // case 'k': opts->numcolsintable = std::max(std::atoi(optarg), 2); break;
+            // case 'e': opts->doc_to_extract = std::atoi(optarg); break;
+            // case 'n': opts->use_heuristics = false; break;
             case 'm': opts->hash_mod = std::atoi(optarg); break;
             default: pfpdoc_build_usage(); std::exit(1);
         }
@@ -245,7 +245,7 @@ void parse_build_options(int argc, char** argv, PFPDocBuildOptions* opts) {
 
 int pfpdoc_build_usage() {
     /* prints out the usage information for the build method */
-    std::fprintf(stderr, "\npfp_doc build - builds the document array profiles using PFP.\n");
+    std::fprintf(stderr, "\npfp_mum build - find mums using PFP.\n");
     std::fprintf(stderr, "Usage: pfp_doc build [options]\n\n");
 
     std::fprintf(stderr, "Options:\n");
@@ -254,12 +254,12 @@ int pfpdoc_build_usage() {
     std::fprintf(stderr, "\t%-18s%-10soutput prefix path if using -f option\n", "-o, --output", "[arg]");
     std::fprintf(stderr, "\t%-28sinclude the reverse-complement of sequence (default: false)\n\n", "-r, --revcomp");
 
-    std::fprintf(stderr, "\t%-28suse taxonomic compression of the document array (default: false)\n", "-t, --taxcomp");
-    std::fprintf(stderr, "\t%-28suse top-k compression of the document array (default: false)\n", "-p, --top-k");
-    std::fprintf(stderr, "\t%-18s%-10snumber of columns to include in the main table (default: 7)\n\n", "-k, --num-col", "[INT]");
+    // std::fprintf(stderr, "\t%-28suse taxonomic compression of the document array (default: false)\n", "-t, --taxcomp");
+    // std::fprintf(stderr, "\t%-28suse top-k compression of the document array (default: false)\n", "-p, --top-k");
+    // std::fprintf(stderr, "\t%-18s%-10snumber of columns to include in the main table (default: 7)\n\n", "-k, --num-col", "[INT]");
     
-    std::fprintf(stderr, "\t%-18s%-10sdocument number whose profiles to extract\n", "-e, --print-doc", "[INT]");
-    std::fprintf(stderr, "\t%-28sturn off any heuristics used to build profiles\n\n", "-n, --no-heuristic");
+    // std::fprintf(stderr, "\t%-18s%-10sdocument number whose profiles to extract\n", "-e, --print-doc", "[INT]");
+    // std::fprintf(stderr, "\t%-28sturn off any heuristics used to build profiles\n\n", "-n, --no-heuristic");
 
     std::fprintf(stderr, "\t%-18s%-10swindow size used for pfp (default: 10)\n", "-w, --window", "[INT]");
     std::fprintf(stderr, "\t%-18s%-10shash-modulus used for pfp (default: 100)\n\n", "-m, --modulus", "[INT]");
@@ -273,15 +273,15 @@ int pfpdoc_usage() {
     std::fprintf(stderr, "Usage: pfp_doc <sub-command> [options]\n\n");
 
     std::fprintf(stderr, "Commands:\n");
-    std::fprintf(stderr, "\tbuild\tbuilds the document profile data-structure\n");
-    std::fprintf(stderr, "\trun\truns queries with respect to the document array structure\n");
-    std::fprintf(stderr, "\tinfo\tprint out information regarding this index and document array\n\n");
+    std::fprintf(stderr, "\tbuild\tbuilds BWT/SA/LCP, and computes mums\n");
+    // std::fprintf(stderr, "\trun\truns queries with respect to the document array structure\n");
+    // std::fprintf(stderr, "\tinfo\tprint out information regarding this index and document array\n\n");
     return 0;
 }
 
 int main(int argc, char** argv) {
     /* main method for pfp_doc */
-    std::fprintf(stderr, "\033[1m\033[31m\npfp-doc version: %s\033[m\033[0m\n", PFPDOC_VERSION);
+    std::fprintf(stderr, "\033[1m\033[31m\npfp-mum version: %s\033[m\033[0m\n", PFPDOC_VERSION);
 
     if (argc > 1) {
         if (std::strcmp(argv[1], "build") == 0) 
