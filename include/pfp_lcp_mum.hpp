@@ -81,12 +81,13 @@ public:
             error("open() file " + outfile + " failed");
 
         outfile = filename + std::string(".mums");
-        std::ofstream mum_file(outfile);
+        mum_file.open(outfile);
 
         assert(pf.dict.d[pf.dict.saD[0]] == EndOfDict);
 
         phrase_suffix_t curr;
         phrase_suffix_t prev;
+
 
         inc(curr);
         while (curr.i < pf.dict.saD.size())
@@ -142,7 +143,7 @@ public:
                     }
                     first = false;
                     // Update min_s
-                    print_lcp(lcp_suffix, j);
+                    // print_lcp(lcp_suffix, j);
 
                     update_ssa(curr, *curr_occ.first);
 
@@ -158,10 +159,16 @@ public:
 
                     bool valid_window = sa_window.size() == num_docs;
 
-                    if(valid_window && is_mum())
+                    if(skip == 0 && valid_window && is_mum())
                     {
                         // std::cout << "MUM FOUND!" << std::endl;
                         write_mum();
+                        skip = num_docs - 1;
+                    }
+                    else if (skip > 0)
+                    {
+                        skip--;
+                        total_skips++;
                     }
                     
                     // update the window datastructures (i.e. slide over)
@@ -211,6 +218,7 @@ public:
         fclose(lcp_file);
 
         mum_file.close();
+        std::cout << "Skipped checking " << total_skips << " entries (" << (total_skips * 100.0 / j) << "%)";
     }
 
 private:
@@ -256,6 +264,10 @@ private:
 
     // stores the current RMQ (avoiding recomputing)
     size_t mum_length = 0;
+
+    // min number of iterations to avoid checking for a mum
+    int skip = 0;
+    int total_skips = 0;
 
     inline void add_doc(size_t d)
     {
@@ -308,6 +320,8 @@ private:
             doc_window.pop_front();
         }
         doc_window.push_back(doc);
+        if(num_docs - window_docs.size() > skip)
+            skip = num_docs - window_docs.size();
     }
 
     inline void update_sa_window(size_t sa_entry, bool valid_window)
@@ -358,14 +372,16 @@ private:
 
     inline void write_mum()
     {
-        // mum_file << std::to_string(mum_length) << '\t';
-        // std::ostream_iterator<size_t> output_iterator(mum_file, ",");
+        mum_file << std::to_string(mum_length) << '\t';
+        for(auto it = sa_window.begin(); it != std::prev(sa_window.end()); ++it)
+        {
+            mum_file << *it << ',';
+        }
+        mum_file << std::to_string(sa_window.back()) << std::endl;
+        // std::cout << std::to_string(mum_length) << '\t';
+        // std::ostream_iterator<size_t> output_iterator(std::cout, ",");
         // std::copy(sa_window.begin(), std::prev(sa_window.end()), output_iterator);
-        // mum_file << std::to_string(sa_window.back()) << std::endl;
-        std::cout << std::to_string(mum_length) << '\t';
-        std::ostream_iterator<size_t> output_iterator(std::cout, ",");
-        std::copy(sa_window.begin(), std::prev(sa_window.end()), output_iterator);
-        std::cout << std::to_string(sa_window.back()) << std::endl;        
+        // std::cout << std::to_string(sa_window.back()) << std::endl;        
     }
 
 
