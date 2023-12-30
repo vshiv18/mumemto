@@ -56,7 +56,7 @@ int build_main(int argc, char** argv) {
     // if (build_opts.doc_to_extract > ref_build.num_docs) {
     //     FATAL_ERROR("Document #%d was requested to be extracted,"
     //                 " but there are only %d documents", build_opts.doc_to_extract, ref_build.num_docs);
-    }
+    // }
 
     // Determine the paths to the BigBWT executables
     HelperPrograms helper_bins;
@@ -103,24 +103,24 @@ int build_main(int argc, char** argv) {
 void run_build_parse_cmd(PFPDocBuildOptions* build_opts, HelperPrograms* helper_bins) {
     // Generates and runs the command-line for executing the PFP of the reference 
     std::ostringstream command_stream;
-    if (build_opts->threads > 0) {
-        std::string curr_exe = "";
-        if (build_opts->is_fasta) {curr_exe.assign(helper_bins->parse_fasta_bin);}
-        else {curr_exe.assign(helper_bins->parse_bin);}
+    // if (build_opts->threads > 0) {
+    //     std::string curr_exe = "";
+    //     if (build_opts->is_fasta) {curr_exe.assign(helper_bins->parse_fasta_bin);}
+    //     else {curr_exe.assign(helper_bins->parse_bin);}
 
-        command_stream << curr_exe << " "; //<< " -i ";
-        command_stream << build_opts->output_ref << " ";
-        command_stream << "-w " << build_opts->pfp_w;
-        command_stream << " -p " << build_opts->hash_mod;
-        // command_stream << " -t " << build_opts->threads;
-    }
-    else {
+    //     command_stream << curr_exe << " "; //<< " -i ";
+    //     command_stream << build_opts->output_ref << " ";
+    //     command_stream << "-w " << build_opts->pfp_w;
+    //     command_stream << " -p " << build_opts->hash_mod;
+    //     // command_stream << " -t " << build_opts->threads;
+    // }
+    // else {
         std::string curr_exe = "";
         command_stream << helper_bins->parseNT_bin << " "; // << " -i ";
         command_stream << build_opts->output_ref << " ";
         command_stream << "-w " << build_opts->pfp_w;
         command_stream << " -p " << build_opts->hash_mod;
-    }
+    // }
     if (build_opts->is_fasta) {command_stream << " -f";}
 
     // std::cout << command_stream.str() << std::endl;
@@ -246,7 +246,7 @@ void parse_build_options(int argc, char** argv, PFPDocBuildOptions* opts) {
 int pfpdoc_build_usage() {
     /* prints out the usage information for the build method */
     std::fprintf(stderr, "\npfp_mum build - find mums using PFP.\n");
-    std::fprintf(stderr, "Usage: pfp_doc build [options]\n\n");
+    std::fprintf(stderr, "Usage: pfp_mum build [options]\n\n");
 
     std::fprintf(stderr, "Options:\n");
     std::fprintf(stderr, "\t%-28sprints this usage message\n", "-h, --help");
@@ -269,8 +269,8 @@ int pfpdoc_build_usage() {
 
 int pfpdoc_usage() {
     /* Prints the usage information for pfp_doc */
-    std::fprintf(stderr, "\npfp_doc has different sub-commands to run:\n");
-    std::fprintf(stderr, "Usage: pfp_doc <sub-command> [options]\n\n");
+    std::fprintf(stderr, "\npfp_mum has different sub-commands to run:\n");
+    std::fprintf(stderr, "Usage: pfp_mum <sub-command> [options]\n\n");
 
     std::fprintf(stderr, "Commands:\n");
     std::fprintf(stderr, "\tbuild\tbuilds BWT/SA/LCP, and computes mums\n");

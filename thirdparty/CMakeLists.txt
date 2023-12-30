@@ -88,6 +88,19 @@ endif()
 #   add_subdirectory(${benchmark_SOURCE_DIR} ${benchmark_BINARY_DIR} EXCLUDE_FROM_ALL)
 # endif()
 
+## Google profiler
+# FetchContent_Declare(
+#   gperftools
+#   GIT_REPOSITORY https://github.com/gperftools/gperftools
+#   GIT_TAG        master
+#   )
+  
+# FetchContent_GetProperties(gperftools)
+# if(NOT gperftools_POPULATED)
+#   FetchContent_Populate(gperftools)
+#   add_subdirectory(${gperftools_SOURCE_DIR} ${gperftools_BINARY_DIR} EXCLUDE_FROM_ALL)
+# endif()
+
 
 ## Add sdsl
 FetchContent_Declare(
