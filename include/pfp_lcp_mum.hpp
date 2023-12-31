@@ -40,6 +40,7 @@ extern "C"
 
 #include <unordered_map>
 #include <queue>
+#include <boost/circular_buffer.hpp>
 
 class pfp_lcp{
 public:
@@ -54,13 +55,23 @@ public:
     size_t length = 0; // Length of the current run of BWT_T
     size_t num_docs = 0;
     // std::vector<uint8_t> heads;
+    
+    boost::circular_buffer<size_t> bwt_window;
+    boost::circular_buffer<size_t> doc_window;
+    boost::circular_buffer<size_t> lcp_window;
+    boost::circular_buffer<size_t> sa_window;
+
 
     pfp_lcp(pf_parsing &pfp_, std::string filename, RefBuilder* ref_build) : 
                 pf(pfp_),
                 min_s(1, pf.n),
                 pos_s(1,0),
                 num_docs(ref_build->num_docs),
-                head(0)
+                head(0),
+                bwt_window(num_docs),
+                doc_window(num_docs),
+                lcp_window(num_docs),
+                sa_window(num_docs)
                 // heads(1, 0)
     {
         // Opening output files
@@ -87,7 +98,6 @@ public:
 
         phrase_suffix_t curr;
         phrase_suffix_t prev;
-
 
         inc(curr);
         while (curr.i < pf.dict.saD.size())
@@ -247,12 +257,7 @@ private:
     // represent RMQ lcp of window as an ordered_set
     // std::multiset<size_t> rmq_window;
     
-    // use queues for each window, pulling from top and adding to end
-    std::deque<uint8_t> bwt_window;
-    std::deque<size_t> doc_window;
-    // dequeue for this, for first pass just find min every iteration
-    std::deque<size_t> lcp_window;
-    std::deque<size_t> sa_window;
+    // try circular buffers instead of deques!
 
     // for window_docs, define an update that decrements the outgoing and increments the incoming doc
     // track docs present in window using frequency map, removing keys if 0
@@ -306,7 +311,6 @@ private:
         if(valid_window)
         {
             remove_bwt(bwt_window.front());
-            bwt_window.pop_front();
         }
         bwt_window.push_back(bwt_c);
     }
@@ -317,7 +321,6 @@ private:
         if(valid_window)
         {
             remove_doc(doc_window.front());
-            doc_window.pop_front();
         }
         doc_window.push_back(doc);
         if(num_docs - window_docs.size() > skip)
@@ -327,16 +330,12 @@ private:
     inline void update_sa_window(size_t sa_entry, bool valid_window)
     {
         // slide over sa window
-        if(valid_window)
-            sa_window.pop_front();
         sa_window.push_back(sa_entry);
     }
 
     inline void update_lcp_window(size_t lcp, bool valid_window)
     {
         // get next lcp from queue, and remove it from set too
-        if(valid_window)
-            lcp_window.pop_front();
         // add lcp to the queue to maintain window order
         lcp_window.push_back(lcp);
         left_lcp = lcp_window.front();
