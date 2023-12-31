@@ -157,7 +157,7 @@ public:
 
                     update_ssa(curr, *curr_occ.first);
 
-                    update_bwt(curr_occ.second.second, 1);
+                    // update_bwt(curr_occ.second.second, 1);
 
                     update_esa(curr, *curr_occ.first);
 
