@@ -358,14 +358,16 @@ private:
 
     inline void write_mum()
     {
-        // mum_file << std::to_string(mum_length) << '\t';
-        // std::ostream_iterator<size_t> output_iterator(mum_file, ",");
+        mum_file << std::to_string(mum_length) << '\t';
+        for(auto it = sa_window.begin(); it != std::prev(sa_window.end()); ++it)
+        {
+            mum_file << *it << ',';
+        }
+        mum_file << std::to_string(sa_window.back()) << std::endl;
+        // std::cout << std::to_string(mum_length) << '\t';
+        // std::ostream_iterator<size_t> output_iterator(std::cout, ",");
         // std::copy(sa_window.begin(), std::prev(sa_window.end()), output_iterator);
-        // mum_file << std::to_string(sa_window.back()) << std::endl;
-        std::cout << std::to_string(mum_length) << '\t';
-        std::ostream_iterator<size_t> output_iterator(std::cout, ",");
-        std::copy(sa_window.begin(), std::prev(sa_window.end()), output_iterator);
-        std::cout << std::to_string(sa_window.back()) << std::endl;        
+        // std::cout << std::to_string(sa_window.back()) << std::endl;        
     }
 
 
