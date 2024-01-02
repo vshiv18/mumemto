@@ -153,11 +153,11 @@ public:
                     }
                     first = false;
                     // Update min_s
-                    // print_lcp(lcp_suffix, j);
+                    print_lcp(lcp_suffix, j);
 
                     update_ssa(curr, *curr_occ.first);
 
-                    // update_bwt(curr_occ.second.second, 1);
+                    update_bwt(curr_occ.second.second, 1);
 
                     update_esa(curr, *curr_occ.first);
 
@@ -169,17 +169,17 @@ public:
 
                     bool valid_window = sa_window.size() == num_docs;
 
-                    if(skip == 0 && valid_window && is_mum())
+                    if(valid_window && is_mum())
                     {
                         // std::cout << "MUM FOUND!" << std::endl;
                         write_mum();
-                        skip = num_docs - 1;
+                        // skip = num_docs - 1;
                     }
-                    else if (skip > 0)
-                    {
-                        skip--;
-                        total_skips++;
-                    }
+                    // else if (skip > 0)
+                    // {
+                    //     skip--;
+                    //     total_skips++;
+                    // }
                     
                     // update the window datastructures (i.e. slide over)
                     update_lcp_window(right_lcp, valid_window);
@@ -228,7 +228,7 @@ public:
         fclose(lcp_file);
 
         mum_file.close();
-        std::cout << "Skipped checking " << total_skips << " entries (" << (total_skips * 100.0 / j) << "%)";
+        // std::cout << "Skipped checking " << total_skips << " entries (" << (total_skips * 100.0 / j) << "%)";
     }
 
 private:
@@ -271,8 +271,8 @@ private:
     size_t mum_length = 0;
 
     // min number of iterations to avoid checking for a mum
-    int skip = 0;
-    int total_skips = 0;
+    // int skip = 0;
+    // int total_skips = 0;
 
     inline void add_doc(size_t d)
     {
