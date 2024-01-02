@@ -323,8 +323,8 @@ private:
             remove_doc(doc_window.front());
         }
         doc_window.push_back(doc);
-        if(num_docs - window_docs.size() > skip)
-            skip = num_docs - window_docs.size();
+        // if(num_docs - window_docs.size() > skip)
+        //     skip = num_docs - window_docs.size();
     }
 
     inline void update_sa_window(size_t sa_entry, bool valid_window)
