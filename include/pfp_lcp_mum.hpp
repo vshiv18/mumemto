@@ -42,6 +42,45 @@ extern "C"
 #include <queue>
 #include <boost/circular_buffer.hpp>
 
+// build a struct for unique-counter-like types
+struct unique_counter {
+    int* window;
+    int total_unique = 0;
+    unique_counter(int n) 
+    {
+        window = new int[n]();
+    }
+    ~unique_counter() 
+    {
+        delete[] window;
+    }
+    void add(size_t d)
+    {
+        if(window[d])
+        {
+            window[d]++;
+        }
+        else
+        {
+            window[d] = 1;
+            total_unique++;
+        }
+    }
+    void remove(size_t d)
+    {
+        assert(window[d] > 0);
+        if(window[d] == 1)
+        {
+            window[d]--;
+            total_unique--;
+        }
+        else
+        {
+            window[d]--;
+        }
+    }
+};
+
 class pfp_lcp{
 public:
 
@@ -67,7 +106,9 @@ public:
                 doc_window(num_docs),
                 lcp_window(num_docs),
                 sa_window(num_docs),
-                lcp_pq(num_docs)
+                lcp_pq(num_docs),
+                window_docs(num_docs),
+                window_bwt(4)
                 // heads(1, 0)
     {
         // Opening output files
@@ -89,9 +130,6 @@ public:
 
         outfile = filename + std::string(".mums");
         mum_file.open(outfile);
-
-        //instantiate doc tracker
-        window_docs = new int[num_docs]();
 
         assert(pf.dict.d[pf.dict.saD[0]] == EndOfDict);
 
@@ -226,8 +264,6 @@ public:
         fclose(bwt_file);
         fclose(lcp_file);
 
-        delete[] window_docs;
-
         mum_file.close();
         // std::cout << "Skipped checking " << total_skips << " entries (" << (total_skips * 100.0 / j) << "%)";
     }
@@ -272,14 +308,15 @@ private:
     // for window_docs, define an update that decrements the outgoing and increments the incoming doc
     // track docs present in window using frequency map, removing keys if 0
     // std::unordered_map<size_t, int> window_docs_vec;
-    int* window_docs;
-    size_t total_unique_docs = 0;
+    unique_counter window_docs;
+    // size_t total_unique_docs = 0;
 
     // track BWT chars present in window using frequency map, removing keys if 0
     // checks if MUM is left extendable (set of BWT chars is the same)
     // std::unordered_map<uint8_t, int> window_bwt_vec;
-    int window_bwt[4] = {0};
-    size_t total_unique_bwt = 0;
+    unique_counter window_bwt;
+    // size_t total_unique_bwt = 0;
+
     const std::map<uint8_t,int> nucMap = {
         {'A', 0},
         {'C', 1},
@@ -295,76 +332,76 @@ private:
     // int skip = 0;
     // int total_skips = 0;
 
-    inline void add_doc(size_t d)
-    {
-        if(window_docs[d])
-        {
-            window_docs[d]++;
-        }
-        else
-        {
-            window_docs[d] = 1;
-            total_unique_docs++;
-        }
-    }
-    inline void remove_doc(size_t d)
-    {
-        assert(window_docs[d] > 0);
-        if(window_docs[d] == 1)
-        {
-            window_docs[d]--;
-            total_unique_docs--;
-        }
-        else
-        {
-            window_docs[d]--;
-        }
-    }
-    inline void add_bwt(uint8_t bwt_c)
-    {
-        int idx = nucMap.at(bwt_c);
-        if(window_bwt[idx])
-        {
-            window_bwt[idx]++;
-        }
-        else
-        {
-            window_bwt[idx] = 1;
-            total_unique_bwt++;
-        }
-    }
-    inline void remove_bwt(uint8_t bwt_c)
-    {
-        int idx = nucMap.at(bwt_c);
+    // inline void add_doc(size_t d)
+    // {
+    //     if(window_docs[d])
+    //     {
+    //         window_docs[d]++;
+    //     }
+    //     else
+    //     {
+    //         window_docs[d] = 1;
+    //         total_unique_docs++;
+    //     }
+    // }
+    // inline void remove_doc(size_t d)
+    // {
+    //     assert(window_docs[d] > 0);
+    //     if(window_docs[d] == 1)
+    //     {
+    //         window_docs[d]--;
+    //         total_unique_docs--;
+    //     }
+    //     else
+    //     {
+    //         window_docs[d]--;
+    //     }
+    // }
+    // inline void add_bwt(uint8_t bwt_c)
+    // {
+    //     int idx = nucMap.at(bwt_c);
+    //     if(window_bwt[idx])
+    //     {
+    //         window_bwt[idx]++;
+    //     }
+    //     else
+    //     {
+    //         window_bwt[idx] = 1;
+    //         total_unique_bwt++;
+    //     }
+    // }
+    // inline void remove_bwt(uint8_t bwt_c)
+    // {
+    //     int idx = nucMap.at(bwt_c);
         
-        assert(window_bwt[idx] > 0);
-        if(window_bwt[idx] == 1)
-        {
-            window_bwt[idx]--;
-            total_unique_bwt--;
-        }
-        else
-        {
-            window_bwt[idx]--;
-        }
-    }
+    //     assert(window_bwt[idx] > 0);
+    //     if(window_bwt[idx] == 1)
+    //     {
+    //         window_bwt[idx]--;
+    //         total_unique_bwt--;
+    //     }
+    //     else
+    //     {
+    //         window_bwt[idx]--;
+    //     }
+    // }
 
     inline void update_bwt_window(uint8_t bwt_c, bool valid_window)
     {
-        add_bwt(bwt_c);
+        window_bwt.add(nucMap.at(bwt_c));
         if(valid_window)
         {
-            remove_bwt(bwt_window.front());
+            window_bwt.remove(nucMap.at(bwt_window.front()));
         }
         bwt_window.push_back(bwt_c);
     }
 
     inline void update_doc_window(size_t doc, bool valid_window)
     {
-        add_doc(doc);
+        window_docs.add(doc);
         if(valid_window)
         {
-            remove_doc(doc_window.front());
+            window_docs.remove(doc_window.front());
         }
         doc_window.push_back(doc);
         // if(num_docs - window_docs.size() > skip)
@@ -418,10 +455,10 @@ private:
     {
         // Check each condition: (check the fast conditions first, then compute RMQ if needed)
         // Check that every doc appears once
-        if(total_unique_docs != num_docs)
+        if(window_docs.total_unique != num_docs)
             return false;
         // Check BWT chars in that range are not all identical (i.e. can be left extended by 1, not maximal)
-        if(total_unique_bwt == 1)
+        if(window_bwt.total_unique == 1)
             return false;
         // check RMQ LCP of window > min_mum
         mum_length = rmq_of_window();
