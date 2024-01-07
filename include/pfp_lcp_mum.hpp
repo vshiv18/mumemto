@@ -257,6 +257,10 @@ private:
     // represent RMQ lcp of window as an ordered_set
     // std::multiset<size_t> rmq_window;
     
+
+    // try the linear RMQ algorithm
+    std::deque<std::pair<size_t, size_t>> lcp_pq;
+    
     // try circular buffers instead of deques!
     boost::circular_buffer<size_t> bwt_window;
     boost::circular_buffer<size_t> doc_window;
@@ -377,13 +381,21 @@ private:
         // add lcp to the queue to maintain window order
         lcp_window.push_back(lcp);
         left_lcp = lcp_window.front();
+
+        // update pq
+        if(!lcp_pq.empty() && lcp_pq.front().second <= (j - num_docs))
+            lcp_pq.pop_front();
+        while(!lcp_pq.empty() && lcp_pq.back().first > lcp)
+            lcp_pq.pop_back();
+        lcp_pq.push_back(std::pair<size_t, size_t>(lcp, j + 1));
     }
 
     inline size_t rmq_of_window()
     {
         // get min LCP in window from ordered set
         // *rmq_window.begin();
-        return *std::min_element(std::next(lcp_window.begin()), lcp_window.end());
+        // return *std::min_element(std::next(lcp_window.begin()), lcp_window.end());
+        return lcp_pq.front().first;
     }
     inline bool is_mum()
     {
