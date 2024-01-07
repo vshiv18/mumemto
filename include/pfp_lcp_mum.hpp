@@ -40,6 +40,7 @@ extern "C"
 
 #include <unordered_map>
 #include <queue>
+#include <boost/circular_buffer.hpp>
 
 class pfp_lcp{
 public:
@@ -55,12 +56,17 @@ public:
     size_t num_docs = 0;
     // std::vector<uint8_t> heads;
 
+
     pfp_lcp(pf_parsing &pfp_, std::string filename, RefBuilder* ref_build) : 
                 pf(pfp_),
                 min_s(1, pf.n),
                 pos_s(1,0),
                 num_docs(ref_build->num_docs),
-                head(0)
+                head(0),
+                bwt_window(num_docs),
+                doc_window(num_docs),
+                lcp_window(num_docs),
+                sa_window(num_docs)
                 // heads(1, 0)
     {
         // Opening output files
@@ -81,7 +87,10 @@ public:
             error("open() file " + outfile + " failed");
 
         outfile = filename + std::string(".mums");
-        std::ofstream mum_file(outfile);
+        mum_file.open(outfile);
+
+        //instantiate doc tracker
+        window_docs = new int[num_docs]();
 
         assert(pf.dict.d[pf.dict.saD[0]] == EndOfDict);
 
@@ -162,7 +171,13 @@ public:
                     {
                         // std::cout << "MUM FOUND!" << std::endl;
                         write_mum();
+                        // skip = num_docs - 1;
                     }
+                    // else if (skip > 0)
+                    // {
+                    //     skip--;
+                    //     total_skips++;
+                    // }
                     
                     // update the window datastructures (i.e. slide over)
                     update_lcp_window(right_lcp, valid_window);
@@ -210,7 +225,10 @@ public:
         fclose(bwt_file);
         fclose(lcp_file);
 
+        delete[] window_docs;
+
         mum_file.close();
+        // std::cout << "Skipped checking " << total_skips << " entries (" << (total_skips * 100.0 / j) << "%)";
     }
 
 private:
@@ -239,56 +257,93 @@ private:
     // represent RMQ lcp of window as an ordered_set
     // std::multiset<size_t> rmq_window;
     
-    // use queues for each window, pulling from top and adding to end
-    std::deque<uint8_t> bwt_window;
-    std::deque<size_t> doc_window;
-    // dequeue for this, for first pass just find min every iteration
-    std::deque<size_t> lcp_window;
     // try the linear RMQ algorithm
     std::deque<std::pair<size_t, size_t>> lcp_pq;
-
-    std::deque<size_t> sa_window;
+  
+    // try circular buffers instead of deques!
+    boost::circular_buffer<size_t> bwt_window;
+    boost::circular_buffer<size_t> doc_window;
+    boost::circular_buffer<size_t> lcp_window;
+    boost::circular_buffer<size_t> sa_window;
 
     // for window_docs, define an update that decrements the outgoing and increments the incoming doc
     // track docs present in window using frequency map, removing keys if 0
-    std::unordered_map<size_t, int> window_docs;
+    // std::unordered_map<size_t, int> window_docs_vec;
+    int* window_docs;
+    size_t total_unique_docs = 0;
 
     // track BWT chars present in window using frequency map, removing keys if 0
     // checks if MUM is left extendable (set of BWT chars is the same)
-    std::unordered_map<uint8_t, int> window_bwt;
+    // std::unordered_map<uint8_t, int> window_bwt_vec;
+    int window_bwt[4] = {0};
+    size_t total_unique_bwt = 0;
+    const std::map<uint8_t,int> nucMap = {
+        {'A', 0},
+        {'C', 1},
+        {'G', 2},
+        {'T', 3},
+        {0, 4} //null char
+    };
 
     // stores the current RMQ (avoiding recomputing)
     size_t mum_length = 0;
 
+    // min number of iterations to avoid checking for a mum
+    // int skip = 0;
+    // int total_skips = 0;
+
     inline void add_doc(size_t d)
     {
-        if(window_docs.count(d))
+        if(window_docs[d])
+        {
             window_docs[d]++;
+        }
         else
+        {
             window_docs[d] = 1;
+            total_unique_docs++;
+        }
     }
     inline void remove_doc(size_t d)
     {
-        assert(window_docs.count(d));
+        assert(window_docs[d] > 0);
         if(window_docs[d] == 1)
-            window_docs.erase(d);
-        else
+        {
             window_docs[d]--;
+            total_unique_docs--;
+        }
+        else
+        {
+            window_docs[d]--;
+        }
     }
     inline void add_bwt(uint8_t bwt_c)
     {
-        if(window_bwt.count(bwt_c))
-            window_bwt[bwt_c]++;
+        int idx = nucMap.at(bwt_c);
+        if(window_bwt[idx])
+        {
+            window_bwt[idx]++;
+        }
         else
-            window_bwt[bwt_c] = 1;
+        {
+            window_bwt[idx] = 1;
+            total_unique_bwt++;
+        }
     }
     inline void remove_bwt(uint8_t bwt_c)
     {
-        assert(window_bwt.count(bwt_c));
-        if(window_bwt[bwt_c] == 1)
-            window_bwt.erase(bwt_c);
+        int idx = nucMap.at(bwt_c);
+        
+        assert(window_bwt[idx] > 0);
+        if(window_bwt[idx] == 1)
+        {
+            window_bwt[idx]--;
+            total_unique_bwt--;
+        }
         else
-            window_bwt[bwt_c]--;
+        {
+            window_bwt[idx]--;
+        }
     }
 
     inline void update_bwt_window(uint8_t bwt_c, bool valid_window)
@@ -297,7 +352,6 @@ private:
         if(valid_window)
         {
             remove_bwt(bwt_window.front());
-            bwt_window.pop_front();
         }
         bwt_window.push_back(bwt_c);
     }
@@ -308,24 +362,21 @@ private:
         if(valid_window)
         {
             remove_doc(doc_window.front());
-            doc_window.pop_front();
         }
         doc_window.push_back(doc);
+        // if(num_docs - window_docs.size() > skip)
+        //     skip = num_docs - window_docs.size();
     }
 
     inline void update_sa_window(size_t sa_entry, bool valid_window)
     {
         // slide over sa window
-        if(valid_window)
-            sa_window.pop_front();
         sa_window.push_back(sa_entry);
     }
 
     inline void update_lcp_window(size_t lcp, bool valid_window)
     {
         // get next lcp from queue, and remove it from set too
-        if(valid_window)
-            lcp_window.pop_front();
         // add lcp to the queue to maintain window order
         lcp_window.push_back(lcp);
         left_lcp = lcp_window.front();
@@ -349,10 +400,10 @@ private:
     {
         // Check each condition: (check the fast conditions first, then compute RMQ if needed)
         // Check that every doc appears once
-        if(window_docs.size() != num_docs)
+        if(total_unique_docs != num_docs)
             return false;
         // Check BWT chars in that range are not all identical (i.e. can be left extended by 1, not maximal)
-        if(window_bwt.size() == 1)
+        if(total_unique_bwt == 1)
             return false;
         // check RMQ LCP of window > min_mum
         mum_length = rmq_of_window();
@@ -369,14 +420,16 @@ private:
 
     inline void write_mum()
     {
-        // mum_file << std::to_string(mum_length) << '\t';
-        // std::ostream_iterator<size_t> output_iterator(mum_file, ",");
+        mum_file << std::to_string(mum_length) << '\t';
+        for(auto it = sa_window.begin(); it != std::prev(sa_window.end()); ++it)
+        {
+            mum_file << *it << ',';
+        }
+        mum_file << std::to_string(sa_window.back()) << std::endl;
+        // std::cout << std::to_string(mum_length) << '\t';
+        // std::ostream_iterator<size_t> output_iterator(std::cout, ",");
         // std::copy(sa_window.begin(), std::prev(sa_window.end()), output_iterator);
-        // mum_file << std::to_string(sa_window.back()) << std::endl;
-        std::cout << std::to_string(mum_length) << '\t';
-        std::ostream_iterator<size_t> output_iterator(std::cout, ",");
-        std::copy(sa_window.begin(), std::prev(sa_window.end()), output_iterator);
-        std::cout << std::to_string(sa_window.back()) << std::endl;        
+        // std::cout << std::to_string(sa_window.back()) << std::endl;        
     }
 
 
