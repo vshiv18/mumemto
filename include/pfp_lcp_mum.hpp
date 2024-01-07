@@ -46,7 +46,7 @@ extern "C"
 struct unique_counter {
     int* window;
     int total_unique = 0;
-    unique_counter(int n) 
+    unique_counter(size_t n) 
     {
         window = new int[n]();
     }
@@ -80,6 +80,27 @@ struct unique_counter {
         }
     }
 };
+
+struct pq_window {
+    // boost::circular_buffer<std::pair<size_t, size_t>> pq;
+    std::deque<std::pair<size_t, size_t>> pq;
+    size_t num_docs;
+    pq_window(size_t n) : pq(num_docs) 
+    {
+        num_docs = n;
+    }
+    void update_pq(int j, size_t lcp){
+        while(!pq.empty() && pq.front().second <= (j + 1 - num_docs))
+            pq.pop_front();
+        while(!pq.empty() && pq.back().first > lcp)
+            pq.pop_back();
+        pq.push_back(std::pair<size_t, size_t>(lcp, j));
+    }
+    size_t min()
+    {
+        return pq.front().first;
+    }
+}; 
 
 class pfp_lcp{
 public:
@@ -297,7 +318,7 @@ private:
 
     // try the linear RMQ algorithm
     // std::deque<std::pair<size_t, size_t>> lcp_pq;
-    boost::circular_buffer<std::pair<size_t, size_t>> lcp_pq;
+    pq_window lcp_pq;
     
     // try circular buffers instead of deques!
     boost::circular_buffer<size_t> bwt_window;
@@ -422,11 +443,7 @@ private:
         left_lcp = lcp_window.front();
 
         // update pq
-        while(!lcp_pq.empty() && lcp_pq.front().second <= (j + 1 - num_docs))
-            lcp_pq.pop_front();
-        while(!lcp_pq.empty() && lcp_pq.back().first > lcp)
-            lcp_pq.pop_back();
-        lcp_pq.push_back(std::pair<size_t, size_t>(lcp, j));
+        lcp_pq.update_pq(j, lcp);
     }
 
     inline size_t rmq_of_window()
@@ -449,7 +466,8 @@ private:
         //     }
         //     std::cout << lcp_window.back() << std::endl;
         // }
-        return lcp_pq.front().first;
+        // return lcp_pq.front().first;
+        return lcp_pq.min();
     }
     inline bool is_mum()
     {
