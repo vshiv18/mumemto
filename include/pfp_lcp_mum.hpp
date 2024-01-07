@@ -44,67 +44,90 @@ extern "C"
 
 // build a struct for unique-counter-like types
 struct unique_counter {
-    int* window;
-    int total_unique = 0;
+    std::vector<int*> windows;
+    std::vector<int> total_unique;
     boost::circular_buffer<size_t> sliding_window;
-    unique_counter(size_t unique, size_t num_docs) : sliding_window(num_docs)
+    size_t num_docs;
+    unique_counter(size_t unique, size_t num_docs, size_t topk) : sliding_window(num_docs), total_unique(topk), windows(topk)
     {
-        window = new int[unique]();
+        for(int i=0; i<topk; i++){
+            windows.at(i) = new int[unique]();
+        }
+        this->num_docs = num_docs;
     }
     ~unique_counter() 
     {
-        delete[] window;
+        for(auto w : windows){
+            delete[] w;
+        }
     }
     void add(size_t d)
     {
-        if(window[d])
+        if(windows.at(0)[d])
         {
-            window[d]++;
+            windows.at(0)[d]++;
         }
         else
         {
-            window[d] = 1;
-            total_unique++;
+            windows.at(0)[d] = 1;
+            total_unique.at(0)++;
+        }
+        for(int i = 1; i < total_unique.size(); i++){
+            if (sliding_window.size() < i)
+                break;
+            d = sliding_window.at(sliding_window.size() - i);
+            if(windows.at(i)[d])
+            {
+                windows.at(i)[d]++;
+            }
+            else
+            {
+                windows.at(i)[d] = 1;
+                total_unique.at(i)++;
+            }
         }
     }
     void remove(size_t d)
     {
-        assert(window[d] > 0);
-        if(window[d] == 1)
-        {
-            window[d]--;
-            total_unique--;
-        }
-        else
-        {
-            window[d]--;
+        // assert(windows[d] > 0);
+        for(int i=0; i<windows.size(); i++){
+            if(windows.at(i)[d] == 1)
+            {
+                windows.at(i)[d]--;
+                total_unique.at(i)--;
+            }
+            else
+            {
+                windows.at(i)[d]--;
+            }
         }
     }
 };
 
 struct pq_window {
     // boost::circular_buffer<std::pair<size_t, size_t>> pq;
-    boost::circular_buffer<size_t> lcp_window;
-    std::deque<std::pair<size_t, size_t>> pq;
+    boost::circular_buffer<size_t> sliding_window;
+    // std::deque<std::pair<size_t, size_t>> pq;
     size_t num_docs;
     size_t left_lcp;
-    pq_window(size_t n) : pq(n), lcp_window(n)
+    pq_window(size_t n) : sliding_window(n)//,  pq(n)
     {
         num_docs = n;
     }
     void update(int j, size_t lcp){
-        lcp_window.push_back(lcp);
-        left_lcp = lcp_window.front();
+        sliding_window.push_back(lcp);
+        left_lcp = sliding_window.front();
 
-        while(!pq.empty() && pq.front().second <= (j + 1 - num_docs))
-            pq.pop_front();
-        while(!pq.empty() && pq.back().first > lcp)
-            pq.pop_back();
-        pq.push_back(std::pair<size_t, size_t>(lcp, j));
+        // while(!pq.empty() && pq.front().second <= (j + 1 - num_docs))
+        //     pq.pop_front();
+        // while(!pq.empty() && pq.back().first > lcp)
+        //     pq.pop_back();
+        // pq.push_back(std::pair<size_t, size_t>(lcp, j));
     }
-    size_t min()
+    size_t min(int i)
     {
-        return pq.front().first;
+        return *std::min_element(std::next(sliding_window.begin()), sliding_window.end() - i);
+        // return pq.front().first;
     }
 }; 
 
@@ -122,6 +145,7 @@ public:
     size_t num_docs = 0;
     // std::vector<uint8_t> heads;
 
+    size_t topk = 2;
 
     pfp_lcp(pf_parsing &pfp_, std::string filename, RefBuilder* ref_build) : 
                 pf(pfp_),
@@ -132,10 +156,10 @@ public:
                 // bwt_window(num_docs),
                 // doc_window(num_docs),
                 // lcp_window(num_docs),
-                sa_window(num_docs),
-                lcp_pq(num_docs),
-                window_docs(num_docs, num_docs),
-                window_bwt(4, num_docs)
+                sa_window(ref_build->num_docs),
+                lcp_pq(ref_build->num_docs),
+                window_docs(ref_build->num_docs, ref_build->num_docs, topk),
+                window_bwt(4, ref_build->num_docs, topk)
                 // heads(1, 0)
     {
         // Opening output files
@@ -233,10 +257,12 @@ public:
 
                     bool valid_window = sa_window.size() == num_docs;
 
-                    if(valid_window && is_mum())
+                    if(valid_window)
                     {
-                        // std::cout << "MUM FOUND!" << std::endl;
-                        write_mum();
+                        int idx = is_mum();
+                        if (idx >= 0)
+                            write_mum(idx);
+                        // std::cout << "MUM FOUND!" << std::endl; 
                         // skip = num_docs - 1;
                     }
                     // else if (skip > 0)
@@ -453,7 +479,7 @@ private:
         lcp_pq.update(j, lcp);
     }
 
-    inline size_t rmq_of_window()
+    inline size_t rmq_of_window(int i)
     {
         // get min LCP in window from ordered set
         // *rmq_window.begin();
@@ -474,38 +500,50 @@ private:
         //     std::cout << lcp_window.back() << std::endl;
         // }
         // return lcp_pq.front().first;
-        return lcp_pq.min();
+        return lcp_pq.min(i);
     }
-    inline bool is_mum()
+    inline int is_mum()
     {
         // Check each condition: (check the fast conditions first, then compute RMQ if needed)
         // Check that every doc appears once
-        if(window_docs.total_unique != num_docs)
-            return false;
-        // Check BWT chars in that range are not all identical (i.e. can be left extended by 1, not maximal)
-        if(window_bwt.total_unique == 1)
-            return false;
-        // check RMQ LCP of window > min_mum
-        mum_length = rmq_of_window();
-        // long enough MUM
-        if(mum_length < MIN_MUM_LENGTH)
-            return false;
-        // Suffix preceding and succeding window don't share long enough prefix (mum is not unique!)
-        if(lcp_pq.left_lcp >= mum_length || right_lcp >= mum_length)
-            return false;
-        
-        return true;
-
+        for(int i = 0; i < topk; i++)
+        {
+            if(window_docs.total_unique.at(i) != (num_docs - i))
+                continue;
+            // Check BWT chars in that range are not all identical (i.e. can be left extended by 1, not maximal)
+            if(window_bwt.total_unique.at(i) == 1)
+                continue;
+            // check RMQ LCP of window > min_mum
+            mum_length = rmq_of_window(i);
+            // long enough MUM
+            if(mum_length < MIN_MUM_LENGTH)
+                continue;
+            // Suffix preceding and succeding window don't share long enough prefix (mum is not unique!)
+            size_t this_right_lcp;
+            if (i == 0)
+                this_right_lcp = right_lcp;
+            else
+                this_right_lcp = lcp_pq.sliding_window.at(lcp_pq.sliding_window.size() - i);
+            if(lcp_pq.left_lcp >= mum_length || this_right_lcp >= mum_length)
+                continue;
+            return i;
+        }
+        return -1;
     }
 
-    inline void write_mum()
+    inline void write_mum(int idx)
     {
         mum_file << std::to_string(mum_length) << '\t';
-        for(auto it = sa_window.begin(); it != std::prev(sa_window.end()); ++it)
+        for (int i = 0; i < num_docs - idx - 1; i++)
         {
-            mum_file << *it << ',';
+            mum_file << sa_window.at(i) << ',';
         }
-        mum_file << std::to_string(sa_window.back()) << std::endl;
+        mum_file << sa_window.at(num_docs - idx - 1) << std::endl;
+        // for(auto it = sa_window.begin(); it != std::prev(sa_window.end()); ++it)
+        // {
+        //     mum_file << *it << ',';
+        // }
+        // mum_file << std::to_string(sa_window.back()) << std::endl;
         // std::cout << std::to_string(mum_length) << '\t';
         // std::ostream_iterator<size_t> output_iterator(std::cout, ",");
         // std::copy(sa_window.begin(), std::prev(sa_window.end()), output_iterator);
