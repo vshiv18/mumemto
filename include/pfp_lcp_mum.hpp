@@ -66,7 +66,8 @@ public:
                 bwt_window(num_docs),
                 doc_window(num_docs),
                 lcp_window(num_docs),
-                sa_window(num_docs)
+                sa_window(num_docs),
+                lcp_pq(num_docs)
                 // heads(1, 0)
     {
         // Opening output files
@@ -259,7 +260,8 @@ private:
     
 
     // try the linear RMQ algorithm
-    std::deque<std::pair<size_t, size_t>> lcp_pq;
+    // std::deque<std::pair<size_t, size_t>> lcp_pq;
+    boost::circular_buffer<std::pair<size_t, size_t>> lcp_pq;
     
     // try circular buffers instead of deques!
     boost::circular_buffer<size_t> bwt_window;
