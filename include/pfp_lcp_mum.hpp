@@ -46,9 +46,10 @@ extern "C"
 struct unique_counter {
     int* window;
     int total_unique = 0;
-    unique_counter(size_t n) 
+    boost::circular_buffer<size_t> sliding_window;
+    unique_counter(size_t unique, size_t num_docs) : sliding_window(num_docs)
     {
-        window = new int[n]();
+        window = new int[unique]();
     }
     ~unique_counter() 
     {
@@ -83,13 +84,18 @@ struct unique_counter {
 
 struct pq_window {
     // boost::circular_buffer<std::pair<size_t, size_t>> pq;
+    boost::circular_buffer<size_t> lcp_window;
     std::deque<std::pair<size_t, size_t>> pq;
     size_t num_docs;
-    pq_window(size_t n) : pq(num_docs) 
+    size_t left_lcp;
+    pq_window(size_t n) : pq(n), lcp_window(n)
     {
         num_docs = n;
     }
-    void update_pq(int j, size_t lcp){
+    void update(int j, size_t lcp){
+        lcp_window.push_back(lcp);
+        left_lcp = lcp_window.front();
+
         while(!pq.empty() && pq.front().second <= (j + 1 - num_docs))
             pq.pop_front();
         while(!pq.empty() && pq.back().first > lcp)
@@ -123,13 +129,13 @@ public:
                 pos_s(1,0),
                 num_docs(ref_build->num_docs),
                 head(0),
-                bwt_window(num_docs),
-                doc_window(num_docs),
-                lcp_window(num_docs),
+                // bwt_window(num_docs),
+                // doc_window(num_docs),
+                // lcp_window(num_docs),
                 sa_window(num_docs),
                 lcp_pq(num_docs),
-                window_docs(num_docs),
-                window_bwt(4)
+                window_docs(num_docs, num_docs),
+                window_bwt(4, num_docs)
                 // heads(1, 0)
     {
         // Opening output files
@@ -321,9 +327,10 @@ private:
     pq_window lcp_pq;
     
     // try circular buffers instead of deques!
-    boost::circular_buffer<size_t> bwt_window;
-    boost::circular_buffer<size_t> doc_window;
-    boost::circular_buffer<size_t> lcp_window;
+    // boost::circular_buffer<size_t> bwt_window;
+    // boost::circular_buffer<size_t> doc_window;
+
+    // boost::circular_buffer<size_t> lcp_window;
     boost::circular_buffer<size_t> sa_window;
 
     // for window_docs, define an update that decrements the outgoing and increments the incoming doc
@@ -412,9 +419,9 @@ private:
         window_bwt.add(nucMap.at(bwt_c));
         if(valid_window)
         {
-            window_bwt.remove(nucMap.at(bwt_window.front()));
+            window_bwt.remove(nucMap.at( window_bwt.sliding_window.front()));
         }
-        bwt_window.push_back(bwt_c);
+        window_bwt.sliding_window.push_back(bwt_c);
     }
 
     inline void update_doc_window(size_t doc, bool valid_window)
@@ -422,9 +429,9 @@ private:
         window_docs.add(doc);
         if(valid_window)
         {
-            window_docs.remove(doc_window.front());
+            window_docs.remove(window_docs.sliding_window.front());
         }
-        doc_window.push_back(doc);
+        window_docs.sliding_window.push_back(doc);
         // if(num_docs - window_docs.size() > skip)
         //     skip = num_docs - window_docs.size();
     }
@@ -439,11 +446,11 @@ private:
     {
         // get next lcp from queue, and remove it from set too
         // add lcp to the queue to maintain window order
-        lcp_window.push_back(lcp);
-        left_lcp = lcp_window.front();
+        // lcp_window.push_back(lcp);
+        // left_lcp = lcp_window.front();
 
         // update pq
-        lcp_pq.update_pq(j, lcp);
+        lcp_pq.update(j, lcp);
     }
 
     inline size_t rmq_of_window()
@@ -484,7 +491,7 @@ private:
         if(mum_length < MIN_MUM_LENGTH)
             return false;
         // Suffix preceding and succeding window don't share long enough prefix (mum is not unique!)
-        if(left_lcp >= mum_length || right_lcp >= mum_length)
+        if(lcp_pq.left_lcp >= mum_length || right_lcp >= mum_length)
             return false;
         
         return true;
