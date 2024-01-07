@@ -383,11 +383,11 @@ private:
         left_lcp = lcp_window.front();
 
         // update pq
-        if(!lcp_pq.empty() && lcp_pq.front().second <= (j - num_docs))
+        while(!lcp_pq.empty() && lcp_pq.front().second <= (j + 1 - num_docs))
             lcp_pq.pop_front();
         while(!lcp_pq.empty() && lcp_pq.back().first > lcp)
             lcp_pq.pop_back();
-        lcp_pq.push_back(std::pair<size_t, size_t>(lcp, j + 1));
+        lcp_pq.push_back(std::pair<size_t, size_t>(lcp, j));
     }
 
     inline size_t rmq_of_window()
@@ -395,6 +395,21 @@ private:
         // get min LCP in window from ordered set
         // *rmq_window.begin();
         // return *std::min_element(std::next(lcp_window.begin()), lcp_window.end());
+        // if(lcp_pq.front().first != *std::min_element(std::next(lcp_window.begin()), lcp_window.end()))
+        // {
+        //     std::cout << "Position: "<< j << ", Actual min: " << (*std::min_element(std::next(lcp_window.begin()), lcp_window.end())) << std::endl;
+        //     for(auto it = lcp_pq.begin(); it != std::prev(lcp_pq.end()); ++it)
+        //     {
+        //         std::cout << "(" << (*it).first << "," << (*it).second << ")" << ',';
+        //     }
+        //     std::cout << "(" << lcp_pq.back().first << "," << lcp_pq.back().second << ")" << std::endl;
+        //     std::cout << "actual window: ";
+        //     for(auto it = lcp_window.begin(); it != std::prev(lcp_window.end()); ++it)
+        //     {
+        //         std::cout << *it << ',';
+        //     }
+        //     std::cout << lcp_window.back() << std::endl;
+        // }
         return lcp_pq.front().first;
     }
     inline bool is_mum()
