@@ -87,10 +87,18 @@ int build_main(int argc, char** argv) {
     //     FORCE_LOG("build_main", "no compression scheme will be used for the doc profiles");
 
     // Builds the BWT, SA, LCP, and document array profiles and writes to a file
-    STATUS_LOG("build_main", "building bwt and doc profiles based on pfp");
+
+    if (build_opts.missing_genomes + 1 >= ref_build.num_docs)
+    {
+        FORCE_LOG("build_main", "Too few number of sequences, defaulting to multi-mums in 2 or more sequences");
+        build_opts.missing_genomes = ref_build.num_docs - 2;
+    }
+
+    STATUS_LOG("build_main", "finding multi-mums from pfp");
+    
     start = std::chrono::system_clock::now();
 
-    pfp_lcp lcp(pf, build_opts.output_ref, &ref_build, build_opts.missing_genomes);
+    pfp_lcp lcp(pf, build_opts.output_ref, &ref_build, build_opts.missing_genomes + 1);
     DONE_LOG((std::chrono::system_clock::now() - start));
 
     // Print stats before closing out
