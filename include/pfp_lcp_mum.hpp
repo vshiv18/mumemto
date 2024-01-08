@@ -148,9 +148,9 @@ public:
     size_t num_docs = 0;
     // std::vector<uint8_t> heads;
 
-    size_t topk = 4;
+    size_t topk;
 
-    pfp_lcp(pf_parsing &pfp_, std::string filename, RefBuilder* ref_build) : 
+    pfp_lcp(pf_parsing &pfp_, std::string filename, RefBuilder* ref_build, size_t topk) : 
                 pf(pfp_),
                 min_s(1, pf.n),
                 pos_s(1,0),
@@ -159,6 +159,7 @@ public:
                 // bwt_window(num_docs),
                 // doc_window(num_docs),
                 // lcp_window(num_docs),
+                topk(topk),
                 sa_window(num_docs),
                 lcp_pq(num_docs),
                 window_docs(num_docs, num_docs, topk),

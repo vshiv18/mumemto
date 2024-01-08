@@ -62,6 +62,7 @@ struct PFPDocBuildOptions {
         size_t hash_mod = 100;
         // size_t threads = 0;
         bool is_fasta = true;
+        size_t missing_genomes = 0;
         // bool use_taxcomp = false;
         // bool use_topk = false;
         // size_t numcolsintable = 7;

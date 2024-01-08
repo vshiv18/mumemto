@@ -90,7 +90,7 @@ int build_main(int argc, char** argv) {
     STATUS_LOG("build_main", "building bwt and doc profiles based on pfp");
     start = std::chrono::system_clock::now();
 
-    pfp_lcp lcp(pf, build_opts.output_ref, &ref_build);
+    pfp_lcp lcp(pf, build_opts.output_ref, &ref_build, build_opts.missing_genomes);
     DONE_LOG((std::chrono::system_clock::now() - start));
 
     // Print stats before closing out
@@ -203,6 +203,7 @@ void print_build_status_info(PFPDocBuildOptions* opts) {
     std::fprintf(stderr, "\tOutput ref path: %s\n", opts->output_ref.data());
     std::fprintf(stderr, "\tPFP window size: %d\n", opts->pfp_w);
     std::fprintf(stderr, "\tInclude rev-comp?: %d\n", opts->use_rcomp);
+    std::fprintf(stderr, "\tfinding multi-MUMs present in N - %d genomes\n", opts->missing_genomes);
     // std::fprintf(stderr, "\tUse heuristics?: %d\n\n", opts->use_heuristics);
 }
 
@@ -214,6 +215,7 @@ void parse_build_options(int argc, char** argv, PFPDocBuildOptions* opts) {
         {"filelist",   required_argument, NULL,  'f'},
         {"output",       required_argument, NULL,  'o'},
         {"revcomp",   no_argument, NULL,  'r'},
+        {"missing-genomes",   optional_argument, NULL,  'k'},
         // {"taxcomp",   no_argument, NULL,  't'},
         // {"num-col",   required_argument, NULL,  'k'},
         // {"top-k",   no_argument, NULL,  'p'},
@@ -234,7 +236,7 @@ void parse_build_options(int argc, char** argv, PFPDocBuildOptions* opts) {
             case 'r': opts->use_rcomp = true; break;
             // case 't': opts->use_taxcomp = true; break;
             // case 'p': opts->use_topk = true; break;
-            // case 'k': opts->numcolsintable = std::max(std::atoi(optarg), 2); break;
+            case 'k': opts->missing_genomes = std::atoi(optarg); break;
             // case 'e': opts->doc_to_extract = std::atoi(optarg); break;
             // case 'n': opts->use_heuristics = false; break;
             case 'm': opts->hash_mod = std::atoi(optarg); break;
@@ -253,6 +255,8 @@ int pfpdoc_build_usage() {
     std::fprintf(stderr, "\t%-18s%-10spath to a file-list of genomes to use\n", "-f, --filelist", "[FILE]");
     std::fprintf(stderr, "\t%-18s%-10soutput prefix path if using -f option\n", "-o, --output", "[arg]");
     std::fprintf(stderr, "\t%-28sinclude the reverse-complement of sequence (default: false)\n\n", "-r, --revcomp");
+
+    std::fprintf(stderr, "\t%-28sfind multi-MUMs in at least N - k genomes (default: 0, strict multi-MUM)\n\n", "-k, --missing-genomes");
 
     // std::fprintf(stderr, "\t%-28suse taxonomic compression of the document array (default: false)\n", "-t, --taxcomp");
     // std::fprintf(stderr, "\t%-28suse top-k compression of the document array (default: false)\n", "-p, --top-k");
