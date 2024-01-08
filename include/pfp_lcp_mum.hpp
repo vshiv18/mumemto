@@ -44,45 +44,48 @@ extern "C"
 
 // build a struct for unique-counter-like types
 struct unique_counter {
-    std::vector<int*> windows;
+    std::vector<std::vector<int>> windows;
     std::vector<int> total_unique;
     boost::circular_buffer<size_t> sliding_window;
     size_t num_docs;
-    unique_counter(size_t unique, size_t num_docs, size_t topk) : sliding_window(num_docs), total_unique(topk), windows(topk)
+    unique_counter(size_t unique, size_t num_docs, size_t topk) : 
+        sliding_window(num_docs), 
+        total_unique(topk), 
+        windows(topk, std::vector<int>(unique,0))
     {
-        for(int i=0; i<topk; i++){
-            windows.at(i) = new int[unique]();
-        }
+        // for(auto window : windows){
+        //     window(unique);
+        // }
         this->num_docs = num_docs;
     }
-    ~unique_counter() 
-    {
-        for(auto w : windows){
-            delete[] w;
-        }
-    }
+    // ~unique_counter() 
+    // {
+    //     for(auto w : windows){
+    //         delete[] w;
+    //     }
+    // }
     void add(size_t d)
     {
-        if(windows.at(0)[d])
+        if(windows.at(0).at(d))
         {
-            windows.at(0)[d]++;
+            windows.at(0).at(d)++;
         }
         else
         {
-            windows.at(0)[d] = 1;
+            windows.at(0).at(d) = 1;
             total_unique.at(0)++;
         }
         for(int i = 1; i < total_unique.size(); i++){
             if (sliding_window.size() < i)
                 break;
             d = sliding_window.at(sliding_window.size() - i);
-            if(windows.at(i)[d])
+            if(windows.at(i).at(d))
             {
-                windows.at(i)[d]++;
+                windows.at(i).at(d)++;
             }
             else
             {
-                windows.at(i)[d] = 1;
+                windows.at(i).at(d) = 1;
                 total_unique.at(i)++;
             }
         }
@@ -91,14 +94,14 @@ struct unique_counter {
     {
         // assert(windows[d] > 0);
         for(int i=0; i<windows.size(); i++){
-            if(windows.at(i)[d] == 1)
+            if(windows.at(i).at(d) == 1)
             {
-                windows.at(i)[d]--;
+                windows.at(i).at(d)--;
                 total_unique.at(i)--;
             }
             else
             {
-                windows.at(i)[d]--;
+                windows.at(i).at(d)--;
             }
         }
     }
@@ -145,7 +148,7 @@ public:
     size_t num_docs = 0;
     // std::vector<uint8_t> heads;
 
-    size_t topk = 2;
+    size_t topk = 4;
 
     pfp_lcp(pf_parsing &pfp_, std::string filename, RefBuilder* ref_build) : 
                 pf(pfp_),
@@ -156,10 +159,10 @@ public:
                 // bwt_window(num_docs),
                 // doc_window(num_docs),
                 // lcp_window(num_docs),
-                sa_window(ref_build->num_docs),
-                lcp_pq(ref_build->num_docs),
-                window_docs(ref_build->num_docs, ref_build->num_docs, topk),
-                window_bwt(4, ref_build->num_docs, topk)
+                sa_window(num_docs),
+                lcp_pq(num_docs),
+                window_docs(num_docs, num_docs, topk),
+                window_bwt(5, num_docs, topk)
                 // heads(1, 0)
     {
         // Opening output files
@@ -307,6 +310,7 @@ public:
                 inc(curr);
             }
         }
+        mum_file.close();
         // print last BWT char and SA sample
         print_sa();
         print_bwt();
@@ -317,7 +321,6 @@ public:
         fclose(bwt_file);
         fclose(lcp_file);
 
-        mum_file.close();
         // std::cout << "Skipped checking " << total_skips << " entries (" << (total_skips * 100.0 / j) << "%)";
     }
 
@@ -442,12 +445,13 @@ private:
 
     inline void update_bwt_window(uint8_t bwt_c, bool valid_window)
     {
-        window_bwt.add(nucMap.at(bwt_c));
+        int bwt_idx = nucMap.at(bwt_c);
+        window_bwt.add(bwt_idx);
         if(valid_window)
         {
-            window_bwt.remove(nucMap.at( window_bwt.sliding_window.front()));
+            window_bwt.remove(window_bwt.sliding_window.front());
         }
-        window_bwt.sliding_window.push_back(bwt_c);
+        window_bwt.sliding_window.push_back(bwt_idx);
     }
 
     inline void update_doc_window(size_t doc, bool valid_window)
