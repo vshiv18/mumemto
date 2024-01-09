@@ -149,9 +149,9 @@ public:
     // std::vector<uint8_t> heads;
 
     size_t topk;
-    bool overlap_mum = true;
+    bool overlap_mum;
 
-    pfp_lcp(pf_parsing &pfp_, std::string filename, RefBuilder* ref_build, size_t topk) : 
+    pfp_lcp(pf_parsing &pfp_, std::string filename, RefBuilder* ref_build, size_t topk, bool overlap) : 
                 pf(pfp_),
                 min_s(1, pf.n),
                 pos_s(1,0),
@@ -161,6 +161,7 @@ public:
                 // doc_window(num_docs),
                 // lcp_window(num_docs),
                 topk(topk),
+                overlap_mum(overlap),
                 sa_window(num_docs),
                 lcp_pq(num_docs),
                 window_docs(num_docs, num_docs, topk),

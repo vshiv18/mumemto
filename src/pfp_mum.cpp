@@ -98,7 +98,7 @@ int build_main(int argc, char** argv) {
     
     start = std::chrono::system_clock::now();
 
-    pfp_lcp lcp(pf, build_opts.output_ref, &ref_build, build_opts.missing_genomes + 1);
+    pfp_lcp lcp(pf, build_opts.output_ref, &ref_build, build_opts.missing_genomes + 1, build_opts.overlap);
     DONE_LOG((std::chrono::system_clock::now() - start));
 
     // Print stats before closing out
@@ -212,6 +212,8 @@ void print_build_status_info(PFPDocBuildOptions* opts) {
     std::fprintf(stderr, "\tPFP window size: %d\n", opts->pfp_w);
     std::fprintf(stderr, "\tInclude rev-comp?: %d\n", opts->use_rcomp);
     std::fprintf(stderr, "\tfinding multi-MUMs present in N - %d genomes\n", opts->missing_genomes);
+    if (opts->overlap && opts->missing_genomes > 0)
+        std::fprintf(stderr, "\t\t- including overlapping multi-MUMs\n");
     // std::fprintf(stderr, "\tUse heuristics?: %d\n\n", opts->use_heuristics);
 }
 
@@ -226,7 +228,7 @@ void parse_build_options(int argc, char** argv, PFPDocBuildOptions* opts) {
         {"missing-genomes",   optional_argument, NULL,  'k'},
         // {"taxcomp",   no_argument, NULL,  't'},
         // {"num-col",   required_argument, NULL,  'k'},
-        // {"top-k",   no_argument, NULL,  'p'},
+        {"overlap",   no_argument, NULL,  'p'},
         // {"print-doc", required_argument, NULL, 'e'},
         // {"no-heuristic", no_argument, NULL, 'n'},
         {"modulus", required_argument, NULL, 'm'},
@@ -243,7 +245,7 @@ void parse_build_options(int argc, char** argv, PFPDocBuildOptions* opts) {
             case 'w': opts->pfp_w = std::atoi(optarg); break;
             case 'r': opts->use_rcomp = true; break;
             // case 't': opts->use_taxcomp = true; break;
-            // case 'p': opts->use_topk = true; break;
+            case 'p': opts->overlap = true; break;
             case 'k': opts->missing_genomes = std::atoi(optarg); break;
             // case 'e': opts->doc_to_extract = std::atoi(optarg); break;
             // case 'n': opts->use_heuristics = false; break;
@@ -266,7 +268,7 @@ int pfpdoc_build_usage() {
 
     std::fprintf(stderr, "\t%-28sfind multi-MUMs in at least N - k genomes (default: 0, strict multi-MUM)\n\n", "-k, --missing-genomes");
 
-    // std::fprintf(stderr, "\t%-28suse taxonomic compression of the document array (default: false)\n", "-t, --taxcomp");
+    std::fprintf(stderr, "\t%-28soutput subset multi-MUMs that overlap shorter, more complete multi-MUMs (default: false)\n", "-p, --overlap");
     // std::fprintf(stderr, "\t%-28suse top-k compression of the document array (default: false)\n", "-p, --top-k");
     // std::fprintf(stderr, "\t%-18s%-10snumber of columns to include in the main table (default: 7)\n\n", "-k, --num-col", "[INT]");
     
