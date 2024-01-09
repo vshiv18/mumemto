@@ -149,6 +149,7 @@ public:
     // std::vector<uint8_t> heads;
 
     size_t topk;
+    bool overlap_mum = true;
 
     pfp_lcp(pf_parsing &pfp_, std::string filename, RefBuilder* ref_build, size_t topk) : 
                 pf(pfp_),
@@ -263,9 +264,9 @@ public:
 
                     if(valid_window)
                     {
-                        int idx = is_mum();
-                        if (idx >= 0)
-                            write_mum(idx);
+                        std::vector<int> idxs = is_mum();
+                        if (idxs.size() > 0)
+                            write_mum(idxs);
                         // std::cout << "MUM FOUND!" << std::endl; 
                         // skip = num_docs - 1;
                     }
@@ -507,10 +508,11 @@ private:
         // return lcp_pq.front().first;
         return lcp_pq.min(i);
     }
-    inline int is_mum()
+    inline std::vector<int> is_mum()
     {
         // Check each condition: (check the fast conditions first, then compute RMQ if needed)
         // Check that every doc appears once
+        std::vector<int> mum_subset;
         for(int i = 0; i < topk; i++)
         {
             if(window_docs.total_unique.at(i) != (num_docs - i))
@@ -531,19 +533,26 @@ private:
                 this_right_lcp = lcp_pq.sliding_window.at(lcp_pq.sliding_window.size() - i);
             if(lcp_pq.left_lcp >= mum_length || this_right_lcp >= mum_length)
                 continue;
-            return i;
+
+            mum_subset.push_back(i);
+
+            if (!overlap_mum)
+                return mum_subset;
         }
-        return -1;
+        return mum_subset;
     }
 
-    inline void write_mum(int idx)
+    inline void write_mum(std::vector<int> const &idxs)
     {
-        mum_file << std::to_string(mum_length) << '\t';
-        for (int i = 0; i < num_docs - idx - 1; i++)
-        {
-            mum_file << sa_window.at(i) << ',';
+        for (int idx : idxs){
+            mum_file << std::to_string(mum_length) << '\t';
+            for (int i = 0; i < num_docs - idx - 1; i++)
+            {
+                mum_file << sa_window.at(i) << ',';
+            }
+            mum_file << sa_window.at(num_docs - idx - 1) << std::endl;
         }
-        mum_file << sa_window.at(num_docs - idx - 1) << std::endl;
+        
         // for(auto it = sa_window.begin(); it != std::prev(sa_window.end()); ++it)
         // {
         //     mum_file << *it << ',';
