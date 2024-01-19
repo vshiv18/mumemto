@@ -20,7 +20,49 @@
 #include <numeric>
 #include <sdsl/bit_vectors.hpp>
 
+#include <algorithm>
+
+#include <streambuf>
+
 KSEQ_INIT(int, read);
+
+
+// buffer filtering adapted from https://chat.openai.com/c/23264676-d3f8-42d3-8aeb-45d0bbcb044e
+class FilterStreambuf : public std::streambuf {
+public:
+    FilterStreambuf(std::streambuf* buf, bool enableFiltering)
+        : buf(buf), enableFiltering(enableFiltering) {}
+
+protected:
+    int overflow(int ch) override {
+        if (enableFiltering) {
+            // Filter out characters here (e.g., exclude 'N' and 'n')
+            if (ch != 'N' && ch != 'n') {
+                return buf->sputc(ch);
+            }
+            return ch;
+        } else {
+            // No filtering, just write the character
+            return buf->sputc(ch);
+        }
+    }
+
+private:
+    std::streambuf* buf;
+    bool enableFiltering;
+};
+
+class FilterStream : public std::ostream {
+public:
+    FilterStream(std::streambuf* buf, bool enableFiltering)
+        : std::ostream(new FilterStreambuf(buf, enableFiltering)) {}
+
+    ~FilterStream() {
+        delete rdbuf();
+    }
+};
+
+
 
 /* Complement Table from: https://github.com/lh3/seqtk/blob/master/seqtk.c */
 char comp_tab[] = {
@@ -77,9 +119,15 @@ RefBuilder::RefBuilder(std::string input_data, std::string output_prefix,
     if (document_ids.back() == 1) {
         FATAL_ERROR("If you only have one class ID, you should not build a document array.");}
 
-    // Declare needed parameters for reading/writing
+    // full reference output
     output_ref = output_prefix + ".fna";
-    std::ofstream output_fd (output_ref.data(), std::ofstream::out);
+    std::ofstream outFile(output_ref.data());
+    FilterStream output_fd_noN(outFile.rdbuf(), true);
+    FilterStream output_fd(outFile.rdbuf(), false);
+    // std::ostream output_fd(&filterStreambuf);
+    // std::ofstream output_fd (output_ref.data(), std::ofstream::out);
+
+    // Declare needed parameters for reading/writing
     FILE* fp; kseq_t* seq;
     std::vector<size_t> seq_lengths;
 
@@ -96,12 +144,14 @@ RefBuilder::RefBuilder(std::string input_data, std::string output_prefix,
 
         while (kseq_read(seq)>=0) {
             // Get forward seq, and write to file
+            // seq->seq.s[i] = str.erase(std::remove(str.begin(), str.end(), 'a'), str.end());
 			for (size_t i = 0; i < seq->seq.l; ++i) {
 				seq->seq.s[i] = static_cast<char>(std::toupper(seq->seq.s[i]));
             }
            
             // Added dollar sign as separator, and added 1 to length
-            output_fd << '>' << seq->name.s << '\n' << seq->seq.s << '\n';
+            output_fd << '>' << seq->name.s << '\n';
+            output_fd_noN << seq->seq.s << '\n';
             curr_id_seq_length += seq->seq.l;
             
             // Get reverse complement, and print it
@@ -119,7 +169,8 @@ RefBuilder::RefBuilder(std::string input_data, std::string output_prefix,
                     seq->seq.s[seq->seq.l>>1] = comp_tab[static_cast<int>(seq->seq.s[seq->seq.l>>1])];
 
                 // Added dollar sign as separator, and added 1 to length
-                output_fd << '>' << seq->name.s << "_rev_comp" << '\n' << seq->seq.s << '\n';
+                output_fd << '>' << seq->name.s << "_rev_comp" << '\n';
+                output_fd_noN << seq->seq.s << '\n';
                 curr_id_seq_length += seq->seq.l;
             }
         }
@@ -136,7 +187,7 @@ RefBuilder::RefBuilder(std::string input_data, std::string output_prefix,
             curr_id_seq_length = 0;
         }
     }
-    output_fd.close();
+    outFile.close();
 
     // Add 1 to last document for $ and find total length
     size_t total_input_length = 0;
