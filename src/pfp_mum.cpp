@@ -63,14 +63,14 @@ int build_main(int argc, char** argv) {
     if (!std::getenv("PFPDOC_BUILD_DIR")) {FATAL_ERROR("Need to set PFPDOC_BUILD_DIR environment variable.");}
     helper_bins.build_paths((std::string(std::getenv("PFPDOC_BUILD_DIR")) + "/bin/").data());
     helper_bins.validate();
+    if (!build_opts.from_parse){
+        // Parse the input text with BigBWT, and load it into pf object
+        STATUS_LOG("build_main", "generating the prefix-free parse for given reference");
+        start = std::chrono::system_clock::now();
 
-    // Parse the input text with BigBWT, and load it into pf object
-    STATUS_LOG("build_main", "generating the prefix-free parse for given reference");
-    start = std::chrono::system_clock::now();
-
-    run_build_parse_cmd(&build_opts, &helper_bins);
-    DONE_LOG((std::chrono::system_clock::now() - start));
-
+        run_build_parse_cmd(&build_opts, &helper_bins);
+        DONE_LOG((std::chrono::system_clock::now() - start));
+    }
     STATUS_LOG("build_main", "building the parse and dictionary objects");
     start = std::chrono::system_clock::now();
 
@@ -232,6 +232,7 @@ void parse_build_options(int argc, char** argv, PFPDocBuildOptions* opts) {
         // {"print-doc", required_argument, NULL, 'e'},
         // {"no-heuristic", no_argument, NULL, 'n'},
         {"modulus", required_argument, NULL, 'm'},
+        {"from-parse",   no_argument, NULL,  'l'},
         {0, 0, 0,  0}
     };
 
@@ -250,6 +251,7 @@ void parse_build_options(int argc, char** argv, PFPDocBuildOptions* opts) {
             // case 'e': opts->doc_to_extract = std::atoi(optarg); break;
             // case 'n': opts->use_heuristics = false; break;
             case 'm': opts->hash_mod = std::atoi(optarg); break;
+            case 'l': opts->from_parse = true; break;
             default: pfpdoc_build_usage(); std::exit(1);
         }
     }
@@ -277,6 +279,7 @@ int pfpdoc_build_usage() {
 
     std::fprintf(stderr, "\t%-18s%-10swindow size used for pfp (default: 10)\n", "-w, --window", "[INT]");
     std::fprintf(stderr, "\t%-18s%-10shash-modulus used for pfp (default: 100)\n\n", "-m, --modulus", "[INT]");
+    std::fprintf(stderr, "\t%-18s%-10suse pre-computed pf-parse\n\n", "-l, --from-parse");
 
     return 0;
 }
