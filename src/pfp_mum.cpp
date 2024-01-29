@@ -60,8 +60,8 @@ int build_main(int argc, char** argv) {
 
     // Determine the paths to the BigBWT executables
     HelperPrograms helper_bins;
-    if (!std::getenv("PFPDOC_BUILD_DIR")) {FATAL_ERROR("Need to set PFPDOC_BUILD_DIR environment variable.");}
-    helper_bins.build_paths((std::string(std::getenv("PFPDOC_BUILD_DIR")) + "/bin/").data());
+    if (!std::getenv("PFPMUM_BUILD_DIR")) {FATAL_ERROR("Need to set PFPMUM_BUILD_DIR environment variable.");}
+    helper_bins.build_paths((std::string(std::getenv("PFPMUM_BUILD_DIR")) + "/bin/").data());
     helper_bins.validate();
     if (!build_opts.from_parse){
         // Parse the input text with BigBWT, and load it into pf object
@@ -270,7 +270,7 @@ int pfpdoc_build_usage() {
 
     std::fprintf(stderr, "\t%-28sfind multi-MUMs in at least N - k genomes (default: 0, strict multi-MUM)\n\n", "-k, --missing-genomes");
 
-    std::fprintf(stderr, "\t%-28soutput subset multi-MUMs that overlap shorter, more complete multi-MUMs (default: false)\n", "-p, --overlap");
+    std::fprintf(stderr, "\t%-28soutput subset multi-MUMs that overlap shorter, more complete multi-MUMs (default: true w/ -k)\n", "-p, --overlap");
     // std::fprintf(stderr, "\t%-28suse top-k compression of the document array (default: false)\n", "-p, --top-k");
     // std::fprintf(stderr, "\t%-18s%-10snumber of columns to include in the main table (default: 7)\n\n", "-k, --num-col", "[INT]");
     
@@ -284,25 +284,24 @@ int pfpdoc_build_usage() {
     return 0;
 }
 
-int pfpdoc_usage() {
-    /* Prints the usage information for pfp_doc */
-    std::fprintf(stderr, "\npfp_mum has different sub-commands to run:\n");
-    std::fprintf(stderr, "Usage: pfp_mum <sub-command> [options]\n\n");
+// int pfpdoc_usage() {
+//     /* Prints the usage information for pfp_doc */
+//     std::fprintf(stderr, "\npfp_mum has different sub-commands to run:\n");
+//     std::fprintf(stderr, "Usage: pfp_mum <sub-command> [options]\n\n");
 
-    std::fprintf(stderr, "Commands:\n");
-    std::fprintf(stderr, "\tbuild\tbuilds BWT/SA/LCP, and computes mums\n");
-    // std::fprintf(stderr, "\trun\truns queries with respect to the document array structure\n");
-    // std::fprintf(stderr, "\tinfo\tprint out information regarding this index and document array\n\n");
-    return 0;
-}
+//     std::fprintf(stderr, "Commands:\n");
+//     std::fprintf(stderr, "\tbuild\tbuilds BWT/SA/LCP, and computes mums\n");
+//     // std::fprintf(stderr, "\trun\truns queries with respect to the document array structure\n");
+//     // std::fprintf(stderr, "\tinfo\tprint out information regarding this index and document array\n\n");
+//     return 0;
+// }
 
 int main(int argc, char** argv) {
     /* main method for pfp_doc */
-    std::fprintf(stderr, "\033[1m\033[31m\npfp-mum version: %s\033[m\033[0m\n", PFPDOC_VERSION);
+    std::fprintf(stderr, "\033[1m\033[31m\npfp-mum version: %s\033[m\033[0m\n", PFPMUM_VERSION);
 
-    if (argc > 1) {
-        if (std::strcmp(argv[1], "build") == 0) 
-            return build_main(argc-1, argv+1);
+    if (argc > 0) {
+        return build_main(argc, argv);
     }
     return pfpdoc_usage();
 }
