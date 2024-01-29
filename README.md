@@ -1,6 +1,6 @@
 # **Mumma Mia**: finding multi-MUMs using prefix-free parsing for big BWTs
 
-This code is based on the [pfp-thresholds](https://github.com/maxrossi91/pfp-thresholds) repository written by [Massimiliano Rossi](https://github.com/maxrossi91) and [docprofiles] repository written by [Omar Ahmed](https://github.com/oma219). 
+This code is based on the [pfp-thresholds](https://github.com/maxrossi91/pfp-thresholds) repository written by [Massimiliano Rossi](https://github.com/maxrossi91) and [docprofiles](https://github.com/oma219/docprofiles) repository written by [Omar Ahmed](https://github.com/oma219). 
 
 This repository identifies **maximal unique matches (multi-MUMs)** present across a collection of sequences. Multi-MUMs are defined as maximally matching substrings present in each sequence in a collection *exactly once*. This method is uses the prefix-free parse (PFP) algorithm for suffix array construction on large, repetitive collections of text.
 
