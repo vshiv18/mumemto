@@ -42,6 +42,98 @@ extern "C"
 #include <queue>
 #include <boost/circular_buffer.hpp>
 
+// build a struct for unique-counter-like types
+struct unique_counter {
+    std::vector<std::vector<int>> windows;
+    std::vector<int> total_unique;
+    boost::circular_buffer<size_t> sliding_window;
+    size_t num_docs;
+    unique_counter(size_t unique, size_t num_docs, size_t topk) : 
+        sliding_window(num_docs), 
+        total_unique(topk), 
+        windows(topk, std::vector<int>(unique,0))
+    {
+        // for(auto window : windows){
+        //     window(unique);
+        // }
+        this->num_docs = num_docs;
+    }
+    // ~unique_counter() 
+    // {
+    //     for(auto w : windows){
+    //         delete[] w;
+    //     }
+    // }
+    void add(size_t d)
+    {
+        if(windows.at(0).at(d))
+        {
+            windows.at(0).at(d)++;
+        }
+        else
+        {
+            windows.at(0).at(d) = 1;
+            total_unique.at(0)++;
+        }
+        for(int i = 1; i < total_unique.size(); i++){
+            if (sliding_window.size() < i)
+                break;
+            d = sliding_window.at(sliding_window.size() - i);
+            if(windows.at(i).at(d))
+            {
+                windows.at(i).at(d)++;
+            }
+            else
+            {
+                windows.at(i).at(d) = 1;
+                total_unique.at(i)++;
+            }
+        }
+    }
+    void remove(size_t d)
+    {
+        // assert(windows[d] > 0);
+        for(int i=0; i<windows.size(); i++){
+            if(windows.at(i).at(d) == 1)
+            {
+                windows.at(i).at(d)--;
+                total_unique.at(i)--;
+            }
+            else
+            {
+                windows.at(i).at(d)--;
+            }
+        }
+    }
+};
+
+struct pq_window {
+    // boost::circular_buffer<std::pair<size_t, size_t>> pq;
+    boost::circular_buffer<size_t> sliding_window;
+    // std::deque<std::pair<size_t, size_t>> pq;
+    size_t num_docs;
+    size_t left_lcp;
+    pq_window(size_t n) : sliding_window(n)//,  pq(n)
+    {
+        num_docs = n;
+    }
+    void update(int j, size_t lcp){
+        sliding_window.push_back(lcp);
+        left_lcp = sliding_window.front();
+
+        // while(!pq.empty() && pq.front().second <= (j + 1 - num_docs))
+        //     pq.pop_front();
+        // while(!pq.empty() && pq.back().first > lcp)
+        //     pq.pop_back();
+        // pq.push_back(std::pair<size_t, size_t>(lcp, j));
+    }
+    size_t min(int i)
+    {
+        return *std::min_element(std::next(sliding_window.begin()), sliding_window.end() - i);
+        // return pq.front().first;
+    }
+}; 
+
 class pfp_lcp{
 public:
 
@@ -56,18 +148,24 @@ public:
     size_t num_docs = 0;
     // std::vector<uint8_t> heads;
 
+    size_t topk;
+    bool overlap_mum;
 
-    pfp_lcp(pf_parsing &pfp_, std::string filename, RefBuilder* ref_build) : 
+    pfp_lcp(pf_parsing &pfp_, std::string filename, RefBuilder* ref_build, size_t topk, bool overlap) : 
                 pf(pfp_),
                 min_s(1, pf.n),
                 pos_s(1,0),
                 num_docs(ref_build->num_docs),
                 head(0),
-                bwt_window(num_docs),
-                doc_window(num_docs),
-                lcp_window(num_docs),
+                // bwt_window(num_docs),
+                // doc_window(num_docs),
+                // lcp_window(num_docs),
+                topk(topk),
+                overlap_mum(overlap),
                 sa_window(num_docs),
-                lcp_pq(num_docs)
+                lcp_pq(num_docs),
+                window_docs(num_docs, num_docs, topk),
+                window_bwt(5, num_docs, topk)
                 // heads(1, 0)
     {
         // Opening output files
@@ -89,9 +187,6 @@ public:
 
         outfile = filename + std::string(".mums");
         mum_file.open(outfile);
-
-        //instantiate doc tracker
-        window_docs = new int[num_docs]();
 
         assert(pf.dict.d[pf.dict.saD[0]] == EndOfDict);
 
@@ -168,10 +263,12 @@ public:
 
                     bool valid_window = sa_window.size() == num_docs;
 
-                    if(valid_window && is_mum())
+                    if(valid_window)
                     {
-                        // std::cout << "MUM FOUND!" << std::endl;
-                        write_mum();
+                        std::vector<int> idxs = is_mum();
+                        if (idxs.size() > 0)
+                            write_mum(idxs);
+                        // std::cout << "MUM FOUND!" << std::endl; 
                         // skip = num_docs - 1;
                     }
                     // else if (skip > 0)
@@ -216,6 +313,7 @@ public:
                 inc(curr);
             }
         }
+        mum_file.close();
         // print last BWT char and SA sample
         print_sa();
         print_bwt();
@@ -226,9 +324,6 @@ public:
         fclose(bwt_file);
         fclose(lcp_file);
 
-        delete[] window_docs;
-
-        mum_file.close();
         // std::cout << "Skipped checking " << total_skips << " entries (" << (total_skips * 100.0 / j) << "%)";
     }
 
@@ -261,25 +356,27 @@ private:
 
     // try the linear RMQ algorithm
     // std::deque<std::pair<size_t, size_t>> lcp_pq;
-    boost::circular_buffer<std::pair<size_t, size_t>> lcp_pq;
+    pq_window lcp_pq;
     
     // try circular buffers instead of deques!
-    boost::circular_buffer<size_t> bwt_window;
-    boost::circular_buffer<size_t> doc_window;
-    boost::circular_buffer<size_t> lcp_window;
+    // boost::circular_buffer<size_t> bwt_window;
+    // boost::circular_buffer<size_t> doc_window;
+
+    // boost::circular_buffer<size_t> lcp_window;
     boost::circular_buffer<size_t> sa_window;
 
     // for window_docs, define an update that decrements the outgoing and increments the incoming doc
     // track docs present in window using frequency map, removing keys if 0
     // std::unordered_map<size_t, int> window_docs_vec;
-    int* window_docs;
-    size_t total_unique_docs = 0;
+    unique_counter window_docs;
+    // size_t total_unique_docs = 0;
 
     // track BWT chars present in window using frequency map, removing keys if 0
     // checks if MUM is left extendable (set of BWT chars is the same)
     // std::unordered_map<uint8_t, int> window_bwt_vec;
-    int window_bwt[4] = {0};
-    size_t total_unique_bwt = 0;
+    unique_counter window_bwt;
+    // size_t total_unique_bwt = 0;
+
     const std::map<uint8_t,int> nucMap = {
         {'A', 0},
         {'C', 1},
@@ -295,78 +392,79 @@ private:
     // int skip = 0;
     // int total_skips = 0;
 
-    inline void add_doc(size_t d)
-    {
-        if(window_docs[d])
-        {
-            window_docs[d]++;
-        }
-        else
-        {
-            window_docs[d] = 1;
-            total_unique_docs++;
-        }
-    }
-    inline void remove_doc(size_t d)
-    {
-        assert(window_docs[d] > 0);
-        if(window_docs[d] == 1)
-        {
-            window_docs[d]--;
-            total_unique_docs--;
-        }
-        else
-        {
-            window_docs[d]--;
-        }
-    }
-    inline void add_bwt(uint8_t bwt_c)
-    {
-        int idx = nucMap.at(bwt_c);
-        if(window_bwt[idx])
-        {
-            window_bwt[idx]++;
-        }
-        else
-        {
-            window_bwt[idx] = 1;
-            total_unique_bwt++;
-        }
-    }
-    inline void remove_bwt(uint8_t bwt_c)
-    {
-        int idx = nucMap.at(bwt_c);
+    // inline void add_doc(size_t d)
+    // {
+    //     if(window_docs[d])
+    //     {
+    //         window_docs[d]++;
+    //     }
+    //     else
+    //     {
+    //         window_docs[d] = 1;
+    //         total_unique_docs++;
+    //     }
+    // }
+    // inline void remove_doc(size_t d)
+    // {
+    //     assert(window_docs[d] > 0);
+    //     if(window_docs[d] == 1)
+    //     {
+    //         window_docs[d]--;
+    //         total_unique_docs--;
+    //     }
+    //     else
+    //     {
+    //         window_docs[d]--;
+    //     }
+    // }
+    // inline void add_bwt(uint8_t bwt_c)
+    // {
+    //     int idx = nucMap.at(bwt_c);
+    //     if(window_bwt[idx])
+    //     {
+    //         window_bwt[idx]++;
+    //     }
+    //     else
+    //     {
+    //         window_bwt[idx] = 1;
+    //         total_unique_bwt++;
+    //     }
+    // }
+    // inline void remove_bwt(uint8_t bwt_c)
+    // {
+    //     int idx = nucMap.at(bwt_c);
         
-        assert(window_bwt[idx] > 0);
-        if(window_bwt[idx] == 1)
-        {
-            window_bwt[idx]--;
-            total_unique_bwt--;
-        }
-        else
-        {
-            window_bwt[idx]--;
-        }
-    }
+    //     assert(window_bwt[idx] > 0);
+    //     if(window_bwt[idx] == 1)
+    //     {
+    //         window_bwt[idx]--;
+    //         total_unique_bwt--;
+    //     }
+    //     else
+    //     {
+    //         window_bwt[idx]--;
+    //     }
+    // }
 
     inline void update_bwt_window(uint8_t bwt_c, bool valid_window)
     {
-        add_bwt(bwt_c);
+        int bwt_idx = nucMap.at(bwt_c);
+        window_bwt.add(bwt_idx);
         if(valid_window)
         {
-            remove_bwt(bwt_window.front());
+            window_bwt.remove(window_bwt.sliding_window.front());
         }
-        bwt_window.push_back(bwt_c);
+        window_bwt.sliding_window.push_back(bwt_idx);
     }
 
     inline void update_doc_window(size_t doc, bool valid_window)
     {
-        add_doc(doc);
+        window_docs.add(doc);
         if(valid_window)
         {
-            remove_doc(doc_window.front());
+            window_docs.remove(window_docs.sliding_window.front());
         }
-        doc_window.push_back(doc);
+        window_docs.sliding_window.push_back(doc);
         // if(num_docs - window_docs.size() > skip)
         //     skip = num_docs - window_docs.size();
     }
@@ -381,18 +479,14 @@ private:
     {
         // get next lcp from queue, and remove it from set too
         // add lcp to the queue to maintain window order
-        lcp_window.push_back(lcp);
-        left_lcp = lcp_window.front();
+        // lcp_window.push_back(lcp);
+        // left_lcp = lcp_window.front();
 
         // update pq
-        while(!lcp_pq.empty() && lcp_pq.front().second <= (j + 1 - num_docs))
-            lcp_pq.pop_front();
-        while(!lcp_pq.empty() && lcp_pq.back().first > lcp)
-            lcp_pq.pop_back();
-        lcp_pq.push_back(std::pair<size_t, size_t>(lcp, j));
+        lcp_pq.update(j, lcp);
     }
 
-    inline size_t rmq_of_window()
+    inline size_t rmq_of_window(int i)
     {
         // get min LCP in window from ordered set
         // *rmq_window.begin();
@@ -412,38 +506,59 @@ private:
         //     }
         //     std::cout << lcp_window.back() << std::endl;
         // }
-        return lcp_pq.front().first;
+        // return lcp_pq.front().first;
+        return lcp_pq.min(i);
     }
-    inline bool is_mum()
+    inline std::vector<int> is_mum()
     {
         // Check each condition: (check the fast conditions first, then compute RMQ if needed)
         // Check that every doc appears once
-        if(total_unique_docs != num_docs)
-            return false;
-        // Check BWT chars in that range are not all identical (i.e. can be left extended by 1, not maximal)
-        if(total_unique_bwt == 1)
-            return false;
-        // check RMQ LCP of window > min_mum
-        mum_length = rmq_of_window();
-        // long enough MUM
-        if(mum_length < MIN_MUM_LENGTH)
-            return false;
-        // Suffix preceding and succeding window don't share long enough prefix (mum is not unique!)
-        if(left_lcp >= mum_length || right_lcp >= mum_length)
-            return false;
-        
-        return true;
+        std::vector<int> mum_subset;
+        for(int i = 0; i < topk; i++)
+        {
+            if(window_docs.total_unique.at(i) != (num_docs - i))
+                continue;
+            // Check BWT chars in that range are not all identical (i.e. can be left extended by 1, not maximal)
+            if(window_bwt.total_unique.at(i) == 1)
+                continue;
+            // check RMQ LCP of window > min_mum
+            mum_length = rmq_of_window(i);
+            // long enough MUM
+            if(mum_length < MIN_MUM_LENGTH)
+                continue;
+            // Suffix preceding and succeding window don't share long enough prefix (mum is not unique!)
+            size_t this_right_lcp;
+            if (i == 0)
+                this_right_lcp = right_lcp;
+            else
+                this_right_lcp = lcp_pq.sliding_window.at(lcp_pq.sliding_window.size() - i);
+            if(lcp_pq.left_lcp >= mum_length || this_right_lcp >= mum_length)
+                continue;
 
+            mum_subset.push_back(i);
+
+            if (!overlap_mum)
+                return mum_subset;
+        }
+        return mum_subset;
     }
 
-    inline void write_mum()
+    inline void write_mum(std::vector<int> const &idxs)
     {
-        mum_file << std::to_string(mum_length) << '\t';
-        for(auto it = sa_window.begin(); it != std::prev(sa_window.end()); ++it)
-        {
-            mum_file << *it << ',';
+        for (int idx : idxs){
+            mum_file << std::to_string(mum_length) << '\t';
+            for (int i = 0; i < num_docs - idx - 1; i++)
+            {
+                mum_file << sa_window.at(i) << ',';
+            }
+            mum_file << sa_window.at(num_docs - idx - 1) << std::endl;
         }
-        mum_file << std::to_string(sa_window.back()) << std::endl;
+        
+        // for(auto it = sa_window.begin(); it != std::prev(sa_window.end()); ++it)
+        // {
+        //     mum_file << *it << ',';
+        // }
+        // mum_file << std::to_string(sa_window.back()) << std::endl;
         // std::cout << std::to_string(mum_length) << '\t';
         // std::ostream_iterator<size_t> output_iterator(std::cout, ",");
         // std::copy(sa_window.begin(), std::prev(sa_window.end()), output_iterator);
