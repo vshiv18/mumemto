@@ -60,17 +60,17 @@ int build_main(int argc, char** argv) {
 
     // Determine the paths to the BigBWT executables
     HelperPrograms helper_bins;
-    if (!std::getenv("PFPDOC_BUILD_DIR")) {FATAL_ERROR("Need to set PFPDOC_BUILD_DIR environment variable.");}
-    helper_bins.build_paths((std::string(std::getenv("PFPDOC_BUILD_DIR")) + "/bin/").data());
+    if (!std::getenv("PFPMUM_BUILD_DIR")) {FATAL_ERROR("Need to set PFPMUM_BUILD_DIR environment variable.");}
+    helper_bins.build_paths((std::string(std::getenv("PFPMUM_BUILD_DIR")) + "/bin/").data());
     helper_bins.validate();
+    if (!build_opts.from_parse){
+        // Parse the input text with BigBWT, and load it into pf object
+        STATUS_LOG("build_main", "generating the prefix-free parse for given reference");
+        start = std::chrono::system_clock::now();
 
-    // Parse the input text with BigBWT, and load it into pf object
-    STATUS_LOG("build_main", "generating the prefix-free parse for given reference");
-    start = std::chrono::system_clock::now();
-
-    run_build_parse_cmd(&build_opts, &helper_bins);
-    DONE_LOG((std::chrono::system_clock::now() - start));
-
+        run_build_parse_cmd(&build_opts, &helper_bins);
+        DONE_LOG((std::chrono::system_clock::now() - start));
+    }
     STATUS_LOG("build_main", "building the parse and dictionary objects");
     start = std::chrono::system_clock::now();
 
@@ -87,10 +87,18 @@ int build_main(int argc, char** argv) {
     //     FORCE_LOG("build_main", "no compression scheme will be used for the doc profiles");
 
     // Builds the BWT, SA, LCP, and document array profiles and writes to a file
-    STATUS_LOG("build_main", "building bwt and doc profiles based on pfp");
+
+    if (build_opts.missing_genomes + 1 >= ref_build.num_docs)
+    {
+        FORCE_LOG("build_main", "Too few number of sequences, defaulting to multi-mums in 2 or more sequences");
+        build_opts.missing_genomes = ref_build.num_docs - 2;
+    }
+
+    STATUS_LOG("build_main", "finding multi-mums from pfp");
+    
     start = std::chrono::system_clock::now();
 
-    pfp_lcp lcp(pf, build_opts.output_ref, &ref_build);
+    pfp_lcp lcp(pf, build_opts.output_ref, &ref_build, build_opts.missing_genomes + 1, build_opts.overlap);
     DONE_LOG((std::chrono::system_clock::now() - start));
 
     // Print stats before closing out
@@ -203,6 +211,9 @@ void print_build_status_info(PFPDocBuildOptions* opts) {
     std::fprintf(stderr, "\tOutput ref path: %s\n", opts->output_ref.data());
     std::fprintf(stderr, "\tPFP window size: %d\n", opts->pfp_w);
     std::fprintf(stderr, "\tInclude rev-comp?: %d\n", opts->use_rcomp);
+    std::fprintf(stderr, "\tfinding multi-MUMs present in N - %d genomes\n", opts->missing_genomes);
+    if (opts->overlap && opts->missing_genomes > 0)
+        std::fprintf(stderr, "\t\t- including overlapping multi-MUMs\n");
     // std::fprintf(stderr, "\tUse heuristics?: %d\n\n", opts->use_heuristics);
 }
 
@@ -214,12 +225,14 @@ void parse_build_options(int argc, char** argv, PFPDocBuildOptions* opts) {
         {"filelist",   required_argument, NULL,  'f'},
         {"output",       required_argument, NULL,  'o'},
         {"revcomp",   no_argument, NULL,  'r'},
+        {"missing-genomes",   optional_argument, NULL,  'k'},
         // {"taxcomp",   no_argument, NULL,  't'},
         // {"num-col",   required_argument, NULL,  'k'},
-        // {"top-k",   no_argument, NULL,  'p'},
+        {"overlap",   no_argument, NULL,  'p'},
         // {"print-doc", required_argument, NULL, 'e'},
         // {"no-heuristic", no_argument, NULL, 'n'},
         {"modulus", required_argument, NULL, 'm'},
+        {"from-parse",   no_argument, NULL,  'l'},
         {0, 0, 0,  0}
     };
 
@@ -233,11 +246,12 @@ void parse_build_options(int argc, char** argv, PFPDocBuildOptions* opts) {
             case 'w': opts->pfp_w = std::atoi(optarg); break;
             case 'r': opts->use_rcomp = true; break;
             // case 't': opts->use_taxcomp = true; break;
-            // case 'p': opts->use_topk = true; break;
-            // case 'k': opts->numcolsintable = std::max(std::atoi(optarg), 2); break;
+            case 'p': opts->overlap = true; break;
+            case 'k': opts->missing_genomes = std::atoi(optarg); break;
             // case 'e': opts->doc_to_extract = std::atoi(optarg); break;
             // case 'n': opts->use_heuristics = false; break;
             case 'm': opts->hash_mod = std::atoi(optarg); break;
+            case 'l': opts->from_parse = true; break;
             default: pfpdoc_build_usage(); std::exit(1);
         }
     }
@@ -254,7 +268,9 @@ int pfpdoc_build_usage() {
     std::fprintf(stderr, "\t%-18s%-10soutput prefix path if using -f option\n", "-o, --output", "[arg]");
     std::fprintf(stderr, "\t%-28sinclude the reverse-complement of sequence (default: false)\n\n", "-r, --revcomp");
 
-    // std::fprintf(stderr, "\t%-28suse taxonomic compression of the document array (default: false)\n", "-t, --taxcomp");
+    std::fprintf(stderr, "\t%-28sfind multi-MUMs in at least N - k genomes (default: 0, strict multi-MUM)\n\n", "-k, --missing-genomes");
+
+    std::fprintf(stderr, "\t%-28soutput subset multi-MUMs that overlap shorter, more complete multi-MUMs (default: true w/ -k)\n", "-p, --overlap");
     // std::fprintf(stderr, "\t%-28suse top-k compression of the document array (default: false)\n", "-p, --top-k");
     // std::fprintf(stderr, "\t%-18s%-10snumber of columns to include in the main table (default: 7)\n\n", "-k, --num-col", "[INT]");
     
@@ -263,29 +279,29 @@ int pfpdoc_build_usage() {
 
     std::fprintf(stderr, "\t%-18s%-10swindow size used for pfp (default: 10)\n", "-w, --window", "[INT]");
     std::fprintf(stderr, "\t%-18s%-10shash-modulus used for pfp (default: 100)\n\n", "-m, --modulus", "[INT]");
+    std::fprintf(stderr, "\t%-18s%-10suse pre-computed pf-parse\n\n", "-l, --from-parse");
 
     return 0;
 }
 
-int pfpdoc_usage() {
-    /* Prints the usage information for pfp_doc */
-    std::fprintf(stderr, "\npfp_mum has different sub-commands to run:\n");
-    std::fprintf(stderr, "Usage: pfp_mum <sub-command> [options]\n\n");
+// int pfpdoc_usage() {
+//     /* Prints the usage information for pfp_doc */
+//     std::fprintf(stderr, "\npfp_mum has different sub-commands to run:\n");
+//     std::fprintf(stderr, "Usage: pfp_mum <sub-command> [options]\n\n");
 
-    std::fprintf(stderr, "Commands:\n");
-    std::fprintf(stderr, "\tbuild\tbuilds BWT/SA/LCP, and computes mums\n");
-    // std::fprintf(stderr, "\trun\truns queries with respect to the document array structure\n");
-    // std::fprintf(stderr, "\tinfo\tprint out information regarding this index and document array\n\n");
-    return 0;
-}
+//     std::fprintf(stderr, "Commands:\n");
+//     std::fprintf(stderr, "\tbuild\tbuilds BWT/SA/LCP, and computes mums\n");
+//     // std::fprintf(stderr, "\trun\truns queries with respect to the document array structure\n");
+//     // std::fprintf(stderr, "\tinfo\tprint out information regarding this index and document array\n\n");
+//     return 0;
+// }
 
 int main(int argc, char** argv) {
     /* main method for pfp_doc */
-    std::fprintf(stderr, "\033[1m\033[31m\npfp-mum version: %s\033[m\033[0m\n", PFPDOC_VERSION);
+    std::fprintf(stderr, "\033[1m\033[31m\npfp-mum version: %s\033[m\033[0m\n", PFPMUM_VERSION);
 
-    if (argc > 1) {
-        if (std::strcmp(argv[1], "build") == 0) 
-            return build_main(argc-1, argv+1);
+    if (argc > 0) {
+        return build_main(argc, argv);
     }
     return pfpdoc_usage();
 }
