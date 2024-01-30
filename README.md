@@ -31,14 +31,17 @@ The basic workflow with `pfp_mum` is to compute the PFP over a collection of seq
 ```sh
 pfp_mum -f <input_list> -o <output_prefix>
 ```
+or 
+```sh
+pfp_mum -o <output_prefix> [input_fasta [...]]
+```
 
-The command above takes in a file-list of multiple genomes and then generates output files using the output prefix. In the file-list, you can specify a list of 
-genomes and then specify which document/class each genome belongs in.
+The command above takes in a file-list of multiple genomes or a list of positional arguments and then generates output files using the output prefix. In the file-list, you can specify a list of 
+genomes and then specify which document/class each genome belongs in. If you pass in fastas as positional arguments, a filelist will be created which contains the order of the sequences in the output *.mums* file.
 
 **Example of file-list file:**
 ```sh
 /path/to/ecoli_1.fna 1
-/path/to/ecoli_2.fna 1
 /path/to/salmonella_1.fna 2
 /path/to/bacillus_1.fna 3
 /path/to/staph_2.fna 4
@@ -49,5 +52,5 @@ genomes and then specify which document/class each genome belongs in.
 [MUM length] [comma-delimited list of offsets within each sequence, in order of filelist]
 ```
 The `*.mums` file contains each MUM as a separate line, where the first value is the match length, and the second is 
-a comma-delimited list of positions where the match begins in each sequence. The MUMs are sorted in the output file
+a comma-delimited list of positions where the match begins in each sequence. An entry of -1 indicates that the MUM was not found in that sequence (only applicable with *-k* flag). The MUMs are sorted in the output file
 lexicographically based on the match sequence.
