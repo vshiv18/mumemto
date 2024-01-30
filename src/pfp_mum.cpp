@@ -259,8 +259,8 @@ void parse_build_options(int argc, char** argv, PFPDocBuildOptions* opts) {
 
 int pfpdoc_build_usage() {
     /* prints out the usage information for the build method */
-    std::fprintf(stderr, "\npfp_mum build - find mums using PFP.\n");
-    std::fprintf(stderr, "Usage: pfp_mum build [options]\n\n");
+    std::fprintf(stderr, "\npfp_mum - find mums using PFP.\n");
+    std::fprintf(stderr, "Usage: pfp_mum [options]\n\n");
 
     std::fprintf(stderr, "Options:\n");
     std::fprintf(stderr, "\t%-28sprints this usage message\n", "-h, --help");
@@ -303,5 +303,5 @@ int main(int argc, char** argv) {
     if (argc > 0) {
         return build_main(argc, argv);
     }
-    return pfpdoc_usage();
+    return pfpdoc_build_usage();
 }

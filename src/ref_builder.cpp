@@ -81,7 +81,7 @@ RefBuilder::RefBuilder(std::string input_data, std::string output_prefix,
     output_ref = output_prefix + ".fna";
     std::ofstream output_fd (output_ref.data(), std::ofstream::out);
     FILE* fp; kseq_t* seq;
-    std::vector<size_t> seq_lengths;
+    // std::vector<size_t> seq_lengths;
 
     // Start working on building the reference file by reading each file ...
     curr_id = 1;
