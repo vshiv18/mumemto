@@ -29,7 +29,7 @@
                                   std::fprintf(stderr, "\n");} while (0)
 
 // Defintions
-#define PFPDOC_VERSION "1.0.0"
+#define PFPMUM_VERSION "1.0.0"
 
 #define DOCWIDTH 2
 #define MAXQUEUELENGTH 1000000
@@ -62,8 +62,10 @@ struct PFPDocBuildOptions {
         size_t hash_mod = 100;
         // size_t threads = 0;
         bool is_fasta = true;
+        size_t missing_genomes = 0;
         // bool use_taxcomp = false;
-        // bool use_topk = false;
+        bool overlap = false;
+        bool from_parse = false;
         // size_t numcolsintable = 7;
         // size_t doc_to_extract = 0;
         // size_t use_heuristics = true;
