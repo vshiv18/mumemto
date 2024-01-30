@@ -60,8 +60,15 @@ int build_main(int argc, char** argv) {
 
     // Determine the paths to the BigBWT executables
     HelperPrograms helper_bins;
-    if (!std::getenv("PFPMUM_BUILD_DIR")) {FATAL_ERROR("Need to set PFPMUM_BUILD_DIR environment variable.");}
-    helper_bins.build_paths((std::string(std::getenv("PFPMUM_BUILD_DIR")) + "/bin/").data());
+    // if (!std::getenv("PFPMUM_BUILD_DIR")) {FATAL_ERROR("Need to set PFPMUM_BUILD_DIR environment variable.");}
+    std::filesystem::path path;
+    if (!std::getenv("PFPMUM_BUILD_DIR")) {
+        path = std::filesystem::canonical("/proc/self/exe").parent_path();
+    }
+    else {
+        path = std::filesystem::path(std::string(std::getenv("PFPMUM_BUILD_DIR")));
+    }
+    helper_bins.build_paths((path / "bin/").string());
     helper_bins.validate();
     if (!build_opts.from_parse){
         // Parse the input text with BigBWT, and load it into pf object
@@ -132,7 +139,7 @@ void run_build_parse_cmd(PFPDocBuildOptions* build_opts, HelperPrograms* helper_
     if (build_opts->is_fasta) {command_stream << " -f";}
 
     // std::cout << command_stream.str() << std::endl;
-    //LOG(build_opts->verbose, "build_parse", ("Executing this command: " + command_stream.str()).data());
+    // std::cout << "Executing this command: " << command_stream.str().c_str() << std::endl;
     auto parse_log = execute_cmd(command_stream.str().c_str());
     //OTHER_LOG(parse_log.data());
 }
@@ -255,6 +262,7 @@ void parse_build_options(int argc, char** argv, PFPDocBuildOptions* opts) {
             default: pfpdoc_build_usage(); std::exit(1);
         }
     }
+
 }
 
 int pfpdoc_build_usage() {
