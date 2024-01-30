@@ -36,6 +36,7 @@ int build_main(int argc, char** argv) {
     build_opts.output_ref.assign(build_opts.output_prefix + ".fna");
     print_build_status_info(&build_opts);
 
+    if (build_opts.input_list.length() == 0) {build_opts.input_list = make_filelist(build_opts.files, build_opts.output_prefix);}
     // Build the input reference file, and bitvector labeling the end for each doc
     STATUS_LOG("build_main", "building the reference file based on file-list");
     auto start = std::chrono::system_clock::now();
@@ -214,7 +215,16 @@ int is_dir(std::string path) {
 void print_build_status_info(PFPDocBuildOptions* opts) {
     /* prints out the information being used in the current run */
     std::fprintf(stderr, "\nOverview of Parameters:\n");
-    std::fprintf(stderr, "\tInput file-list: %s\n", opts->input_list.data());
+    if (opts->input_list.length())
+        std::fprintf(stderr, "\tInput file-list: %s\n", opts->input_list.data());
+    else {
+        std::fprintf(stderr, "\tInput files: ");
+        for (int i = 0; i < opts->files.size() - 1; i++)
+            {
+                std::fprintf(stderr, "%s,", opts->files.at(i).data());
+            }
+            std::fprintf(stderr, "%s\n", opts->files.at(opts->files.size() - 1).data());
+    }
     std::fprintf(stderr, "\tOutput ref path: %s\n", opts->output_ref.data());
     std::fprintf(stderr, "\tPFP window size: %d\n", opts->pfp_w);
     std::fprintf(stderr, "\tInclude rev-comp?: %d\n", opts->use_rcomp);
@@ -223,6 +233,17 @@ void print_build_status_info(PFPDocBuildOptions* opts) {
         std::fprintf(stderr, "\t\t- including overlapping multi-MUMs\n");
     // std::fprintf(stderr, "\tUse heuristics?: %d\n\n", opts->use_heuristics);
 }
+
+std::string make_filelist(std::vector<std::string> files, std::string output_prefix) {
+    std::string fname = output_prefix + "_filelist.txt";
+    std::ofstream outfile(fname);
+    for (size_t i = 0; i < files.size(); ++i) {
+        outfile << files[i] << " " << i + 1 << std::endl;
+    }
+    outfile.close();
+    return fname;
+}
+
 
 void parse_build_options(int argc, char** argv, PFPDocBuildOptions* opts) {
     /* parses the arguments for the build sub-command, and returns a struct with arguments */
@@ -263,16 +284,20 @@ void parse_build_options(int argc, char** argv, PFPDocBuildOptions* opts) {
         }
     }
 
+    for (int i = optind; i < argc; ++i) {
+        opts->files.push_back(argv[i]);
+    }
+
 }
 
 int pfpdoc_build_usage() {
     /* prints out the usage information for the build method */
     std::fprintf(stderr, "\npfp_mum - find mums using PFP.\n");
-    std::fprintf(stderr, "Usage: pfp_mum [options]\n\n");
+    std::fprintf(stderr, "Usage: pfp_mum [options] [input_fasta [...]]\n\n");
 
     std::fprintf(stderr, "Options:\n");
     std::fprintf(stderr, "\t%-28sprints this usage message\n", "-h, --help");
-    std::fprintf(stderr, "\t%-18s%-10spath to a file-list of genomes to use\n", "-f, --filelist", "[FILE]");
+    std::fprintf(stderr, "\t%-18s%-10spath to a file-list of genomes to use (overrides positional args)\n", "-f, --filelist", "[FILE]");
     std::fprintf(stderr, "\t%-18s%-10soutput prefix path if using -f option\n", "-o, --output", "[arg]");
     std::fprintf(stderr, "\t%-28sinclude the reverse-complement of sequence (default: false)\n\n", "-r, --revcomp");
 

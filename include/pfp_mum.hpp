@@ -46,6 +46,7 @@ int build_main(int argc, char** argv);
 int pfpdoc_build_usage();
 int is_file(std::string path);
 int is_dir(std::string path);
+std::string  make_filelist(std::vector<std::string> files, std::string output_prefix);
 std::vector<std::string> split(std::string input, char delim);
 bool is_integer(const std::string& str);
 bool endsWith(const std::string& str, const std::string& suffix);
@@ -57,6 +58,7 @@ struct PFPDocBuildOptions {
         std::string input_list = "";
         std::string output_prefix = "";
         std::string output_ref = "";
+        std::vector<std::string> files;
         bool use_rcomp = false;
         size_t pfp_w = 10;
         size_t hash_mod = 100;
@@ -74,9 +76,18 @@ struct PFPDocBuildOptions {
             /* checks the arguments and make sure they are valid */
             if (input_list.length() && !is_file(input_list)) // provided a file-list
                 FATAL_ERROR("The provided file-list is not valid.");
-            else if (input_list.length() == 0)
-                FATAL_ERROR("Need to provide a file-list for processing.");
-
+            else if (input_list.length() && is_file(input_list) && (files.size() > 0)) {
+                FORCE_LOG("build_main", "Using filelist, ignoring positional args");
+                files.clear();
+            }
+            else if (input_list.length() == 0 && (files.size() == 0))
+                FATAL_ERROR("Need to provide a file-list or files as positional args for processing.");
+            
+            for (auto f : files) {
+                if (!is_file(f)) {
+                    FATAL_ERROR(("The following file path is not valid: " + f).c_str());
+                }
+            }
             std::filesystem::path p (output_prefix);
             if (!is_dir(p.parent_path().string()))
                 FATAL_ERROR("Output path prefix is not in a valid directory."); 
