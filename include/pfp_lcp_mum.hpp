@@ -545,6 +545,7 @@ private:
 
     inline void write_mum(std::vector<int> const &idxs)
     {
+
         for (int idx : idxs){
             mum_file << std::to_string(mum_length) << '\t';
             for (int i = 0; i < num_docs - idx - 1; i++)
@@ -559,6 +560,7 @@ private:
         //     mum_file << *it << ',';
         // }
         // mum_file << std::to_string(sa_window.back()) << std::endl;
+
         // std::cout << std::to_string(mum_length) << '\t';
         // std::ostream_iterator<size_t> output_iterator(std::cout, ",");
         // std::copy(sa_window.begin(), std::prev(sa_window.end()), output_iterator);
