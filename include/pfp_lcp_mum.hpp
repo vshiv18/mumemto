@@ -148,15 +148,18 @@ public:
     size_t num_docs = 0;
     // std::vector<uint8_t> heads;
     std::vector<size_t> doc_offsets;
+    std::vector<size_t> doc_lens;
     size_t topk;
     bool overlap_mum;
-    bool 
+    bool revcomp;
 
     pfp_lcp(pf_parsing &pfp_, std::string filename, RefBuilder* ref_build, size_t topk, bool overlap) : 
                 pf(pfp_),
                 min_s(1, pf.n),
                 pos_s(1,0),
                 num_docs(ref_build->num_docs),
+                revcomp(ref_build->use_revcomp),
+                doc_lens(ref_build->seq_lengths),
                 head(0),
                 // bwt_window(num_docs),
                 // doc_window(num_docs),
@@ -173,7 +176,7 @@ public:
         // get cumulative offset
         size_t curr_sum = 0;
         for (size_t i = 0; i < num_docs - 1; i++) {
-            curr_sum += ref_build->seq_lengths.at(i);
+            curr_sum += doc_lens.at(i);
             doc_offsets.at(i + 1) = curr_sum;
         }
 
@@ -569,6 +572,8 @@ private:
             {
                 doc = window_docs.sliding_window.at(i);
                 offsets.at(doc) = sa_window.at(i) - doc_offsets.at(doc);
+                if (revcomp && offsets.at(doc) > doc_lens.at(doc))
+                    offsets.at(doc) = doc_lens.at(doc) - offsets.at(doc);
             }
 
             mum_file << std::to_string(mum_length) << '\t';
