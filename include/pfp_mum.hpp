@@ -66,7 +66,7 @@ struct PFPDocBuildOptions {
         bool is_fasta = true;
         size_t missing_genomes = 0;
         // bool use_taxcomp = false;
-        bool overlap = false;
+        bool overlap = true;
         bool from_parse = false;
         // size_t numcolsintable = 7;
         // size_t doc_to_extract = 0;

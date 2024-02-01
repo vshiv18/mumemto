@@ -150,6 +150,7 @@ public:
     std::vector<size_t> doc_offsets;
     size_t topk;
     bool overlap_mum;
+    bool 
 
     pfp_lcp(pf_parsing &pfp_, std::string filename, RefBuilder* ref_build, size_t topk, bool overlap) : 
                 pf(pfp_),
