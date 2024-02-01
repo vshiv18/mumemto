@@ -179,6 +179,9 @@ public:
             curr_sum += doc_lens.at(i);
             doc_offsets.at(i + 1) = curr_sum;
         }
+        for (auto i = 0; i < doc_lens.size(); i++) {
+            doc_lens[i] = doc_lens[i] / 2;
+        }
 
 
         // Opening output files
@@ -572,16 +575,36 @@ private:
             {
                 doc = window_docs.sliding_window.at(i);
                 offsets.at(doc) = sa_window.at(i) - doc_offsets.at(doc);
-                if (revcomp && offsets.at(doc) > doc_lens.at(doc))
-                    offsets.at(doc) = doc_lens.at(doc) - offsets.at(doc);
             }
 
             mum_file << std::to_string(mum_length) << '\t';
             for (int i = 0; i < num_docs - 1; i++)
             {
-                mum_file <<  offsets.at(i) << ',';
+                if (offsets.at(i) == -1) {
+                    mum_file << ',';
+                }
+                else if (revcomp && offsets.at(i) > doc_lens.at(i)) {
+                    offsets.at(i) = doc_lens.at(i) - offsets.at(i);
+                    mum_file << offsets.at(i) << ',';
+                }
+                else {
+                    mum_file << offsets.at(i) << ',';
+                }
+                    
             }
-            mum_file << offsets.at(num_docs - 1) << std::endl;
+            if (offsets.at(num_docs - 1) == -1) {
+                mum_file << std::endl;
+            }
+            else if (revcomp && offsets.at(num_docs - 1) > doc_lens.at(num_docs - 1)) {
+                offsets.at(num_docs - 1) = doc_lens.at(num_docs - 1) - offsets.at(num_docs - 1);
+                mum_file << offsets.at(num_docs - 1) << std::endl;
+            }
+            else {
+                mum_file << offsets.at(num_docs - 1) << std::endl;
+            }
+                
+
+            // mum_file << offsets.at(num_docs - 1) << std::endl;
 
             // for (int i = 0; i < num_docs - idx - 1; i++)
             // {
