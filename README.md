@@ -47,7 +47,7 @@ genomes and then specify which document/class each genome belongs in. If you pas
 /path/to/staph_2.fna 4
 ```
 
-**Format of the *.mums file:**
+**Format of the \*.mums file:**
 ```sh
 [MUM length] [comma-delimited list of offsets within each sequence, in order of filelist]
 ```
