@@ -179,9 +179,12 @@ public:
             curr_sum += doc_lens.at(i);
             doc_offsets.at(i + 1) = curr_sum;
         }
-        for (auto i = 0; i < doc_lens.size(); i++) {
-            doc_lens[i] = doc_lens[i] / 2;
+        if (revcomp) {
+            for (auto i = 0; i < doc_lens.size(); i++) {
+                doc_lens[i] = doc_lens[i] / 2;
+            }
         }
+        
 
 
         // Opening output files
@@ -564,6 +567,7 @@ private:
     inline void write_mum(std::vector<std::pair<int, int>> const &idxs)
     {
         std::vector<int> offsets(num_docs);
+        std::vector<char> strand(num_docs);
         int doc;
         int idx;
         int mum_length;
@@ -571,46 +575,44 @@ private:
             idx = data.first;
             mum_length = data.second;
             std::fill(offsets.begin(), offsets.end(), -1);
+            std::fill(strand.begin(), strand.end(), 0);
             for (int i = 0; i < num_docs - idx; i++)
             {
                 doc = window_docs.sliding_window.at(i);
                 offsets.at(doc) = sa_window.at(i) - doc_offsets.at(doc);
+                if (revcomp && offsets.at(doc) >= doc_lens.at(doc)) {
+                    strand.at(doc) = '-';
+                    offsets.at(doc) = offsets.at(doc) - doc_lens.at(doc);
+                }
+                else 
+                    strand.at(doc) = '+';
             }
 
             mum_file << std::to_string(mum_length) << '\t';
             for (int i = 0; i < num_docs - 1; i++)
             {
-                if (offsets.at(i) == -1) {
+                if (offsets.at(i) == -1) 
                     mum_file << ',';
-                }
-                else if (revcomp && offsets.at(i) > doc_lens.at(i)) {
-                    offsets.at(i) = doc_lens.at(i) - offsets.at(i);
+                else
                     mum_file << offsets.at(i) << ',';
-                }
-                else {
-                    mum_file << offsets.at(i) << ',';
-                }
-                    
             }
-            if (offsets.at(num_docs - 1) == -1) {
+            if (offsets.at(num_docs - 1) == -1) 
+                mum_file << '\t';
+            else
+                mum_file << offsets.at(num_docs - 1) << '\t';
+
+            for (int i = 0; i < num_docs - 1; i++) {
+                if (offsets.at(i) == -1) 
+                    mum_file << ',';
+                else
+                    mum_file << strand.at(i) << ',';
+            }   
+            if (offsets.at(num_docs - 1) == -1) 
                 mum_file << std::endl;
-            }
-            else if (revcomp && offsets.at(num_docs - 1) > doc_lens.at(num_docs - 1)) {
-                offsets.at(num_docs - 1) = doc_lens.at(num_docs - 1) - offsets.at(num_docs - 1);
-                mum_file << offsets.at(num_docs - 1) << std::endl;
-            }
-            else {
-                mum_file << offsets.at(num_docs - 1) << std::endl;
-            }
+            else
+                mum_file << strand.at(num_docs - 1) << std::endl;
+            
                 
-
-            // mum_file << offsets.at(num_docs - 1) << std::endl;
-
-            // for (int i = 0; i < num_docs - idx - 1; i++)
-            // {
-            //     mum_file <<  sa_window.at(i) << ',';
-            // }
-            // mum_file << sa_window.at(num_docs - idx - 1) << std::endl;
         }
         
         // for(auto it = sa_window.begin(); it != std::prev(sa_window.end()); ++it)
