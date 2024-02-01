@@ -49,8 +49,8 @@ genomes and then specify which document/class each genome belongs in. If you pas
 
 **Format of the \*.mums file:**
 ```sh
-[MUM length] [comma-delimited list of offsets within each sequence, in order of filelist]
+[MUM length] [comma-delimited list of offsets within each sequence, in order of filelist] [comma-delimited strand indicators (one of +/-)]
 ```
 The `*.mums` file contains each MUM as a separate line, where the first value is the match length, and the second is 
-a comma-delimited list of positions where the match begins in each sequence. An entry of -1 indicates that the MUM was not found in that sequence (only applicable with *-k* flag). The MUMs are sorted in the output file
+a comma-delimited list of positions where the match begins in each sequence. An empty entry indicates that the MUM was not found in that sequence (only applicable with *-k* flag). The MUMs are sorted in the output file
 lexicographically based on the match sequence.
