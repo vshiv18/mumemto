@@ -66,27 +66,27 @@ struct unique_counter {
     // }
     void add(size_t d)
     {
-        if(windows.at(0).at(d))
+        if(windows[0][d])
         {
-            windows.at(0).at(d)++;
+            windows[0][d]++;
         }
         else
         {
-            windows.at(0).at(d) = 1;
-            total_unique.at(0)++;
+            windows[0][d] = 1;
+            total_unique[0]++;
         }
         for(int i = 1; i < total_unique.size(); i++){
             if (sliding_window.size() < i)
                 break;
-            d = sliding_window.at(sliding_window.size() - i);
-            if(windows.at(i).at(d))
+            d = sliding_window[sliding_window.size() - i];
+            if(windows[i][d])
             {
-                windows.at(i).at(d)++;
+                windows[i][d]++;
             }
             else
             {
-                windows.at(i).at(d) = 1;
-                total_unique.at(i)++;
+                windows[i][d] = 1;
+                total_unique[i]++;
             }
         }
     }
@@ -94,14 +94,14 @@ struct unique_counter {
     {
         // assert(windows[d] > 0);
         for(int i=0; i<windows.size(); i++){
-            if(windows.at(i).at(d) == 1)
+            if(windows[i][d] == 1)
             {
-                windows.at(i).at(d)--;
-                total_unique.at(i)--;
+                windows[i][d]--;
+                total_unique[i]--;
             }
             else
             {
-                windows.at(i).at(d)--;
+                windows[i][d]--;
             }
         }
     }
@@ -169,15 +169,15 @@ public:
                 sa_window(num_docs),
                 lcp_pq(num_docs),
                 window_docs(num_docs, num_docs, topk),
-                window_bwt(5, num_docs, topk),
+                window_bwt(6, num_docs, topk),
                 doc_offsets(num_docs, 0)
                 // heads(1, 0)
     {
         // get cumulative offset
         size_t curr_sum = 0;
         for (size_t i = 0; i < num_docs - 1; i++) {
-            curr_sum += doc_lens.at(i);
-            doc_offsets.at(i + 1) = curr_sum;
+            curr_sum += doc_lens[i];
+            doc_offsets[i + 1] = curr_sum;
         }
         if (revcomp) {
             for (auto i = 0; i < doc_lens.size(); i++) {
@@ -401,8 +401,10 @@ private:
         {'C', 1},
         {'G', 2},
         {'T', 3},
-        {0, 4} //null char
+        {'N', 4},
+        {0, 5} //null char
     };
+    const int NUC_NUM = nucMap.size();
 
     // stores the current RMQ (avoiding recomputing)
     size_t mum_length = 0;
@@ -537,10 +539,10 @@ private:
         std::vector<std::pair<int, int>> mum_subset;
         for(int i = 0; i < topk; i++)
         {
-            if(window_docs.total_unique.at(i) != (num_docs - i))
+            if(window_docs.total_unique[i] != (num_docs - i))
                 continue;
             // Check BWT chars in that range are not all identical (i.e. can be left extended by 1, not maximal)
-            if(window_bwt.total_unique.at(i) == 1)
+            if(window_bwt.total_unique[i] == 1)
                 continue;
             // check RMQ LCP of window > min_mum
             mum_length = rmq_of_window(i);
@@ -552,7 +554,7 @@ private:
             if (i == 0)
                 this_right_lcp = right_lcp;
             else
-                this_right_lcp = lcp_pq.sliding_window.at(lcp_pq.sliding_window.size() - i);
+                this_right_lcp = lcp_pq.sliding_window[lcp_pq.sliding_window.size() - i];
             if(lcp_pq.left_lcp >= mum_length || this_right_lcp >= mum_length)
                 continue;
 
@@ -578,39 +580,39 @@ private:
             std::fill(strand.begin(), strand.end(), 0);
             for (int i = 0; i < num_docs - idx; i++)
             {
-                doc = window_docs.sliding_window.at(i);
-                offsets.at(doc) = sa_window.at(i) - doc_offsets.at(doc);
-                if (revcomp && offsets.at(doc) >= doc_lens.at(doc)) {
-                    strand.at(doc) = '-';
-                    offsets.at(doc) = offsets.at(doc) - doc_lens.at(doc);
+                doc = window_docs.sliding_window[i];
+                offsets[doc] = sa_window[i] - doc_offsets[doc];
+                if (revcomp && offsets[doc] >= doc_lens[doc]) {
+                    strand[doc] = '-';
+                    offsets[doc] = offsets[doc] - doc_lens[doc];
                 }
                 else 
-                    strand.at(doc) = '+';
+                    strand[doc] = '+';
             }
 
             mum_file << std::to_string(mum_length) << '\t';
             for (int i = 0; i < num_docs - 1; i++)
             {
-                if (offsets.at(i) == -1) 
+                if (offsets[i] == -1) 
                     mum_file << ',';
                 else
-                    mum_file << offsets.at(i) << ',';
+                    mum_file << offsets[i] << ',';
             }
-            if (offsets.at(num_docs - 1) == -1) 
+            if (offsets[num_docs - 1] == -1) 
                 mum_file << '\t';
             else
-                mum_file << offsets.at(num_docs - 1) << '\t';
+                mum_file << offsets[num_docs - 1] << '\t';
 
             for (int i = 0; i < num_docs - 1; i++) {
-                if (offsets.at(i) == -1) 
+                if (offsets[i] == -1) 
                     mum_file << ',';
                 else
-                    mum_file << strand.at(i) << ',';
+                    mum_file << strand[i] << ',';
             }   
-            if (offsets.at(num_docs - 1) == -1) 
+            if (offsets[num_docs - 1] == -1) 
                 mum_file << std::endl;
             else
-                mum_file << strand.at(num_docs - 1) << std::endl;
+                mum_file << strand[num_docs - 1] << std::endl;
             
                 
         }
