@@ -141,7 +141,7 @@ public:
     std::vector<size_t> min_s; // Value of the minimum lcp_T in each run of BWT_T
     std::vector<size_t> pos_s;    // Position of the minimum lcp_T in each run of BWT_T
 
-    const size_t MIN_MUM_LENGTH = 20;
+    size_t MIN_MUM_LENGTH;
 
     uint8_t head;
     size_t length = 0; // Length of the current run of BWT_T
@@ -153,10 +153,11 @@ public:
     bool overlap_mum;
     bool revcomp;
 
-    pfp_lcp(pf_parsing &pfp_, std::string filename, RefBuilder* ref_build, size_t topk, bool overlap) : 
+    pfp_lcp(pf_parsing &pfp_, std::string filename, RefBuilder* ref_build, size_t min_mum_len, size_t topk, bool overlap) : 
                 pf(pfp_),
                 min_s(1, pf.n),
                 pos_s(1,0),
+                MIN_MUM_LENGTH(min_mum_len),
                 num_docs(ref_build->num_docs),
                 revcomp(ref_build->use_revcomp),
                 doc_lens(ref_build->seq_lengths),

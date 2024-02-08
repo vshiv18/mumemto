@@ -68,6 +68,7 @@ struct PFPDocBuildOptions {
         // bool use_taxcomp = false;
         bool overlap = true;
         bool from_parse = false;
+        size_t min_mum_len = 20;
         // size_t numcolsintable = 7;
         // size_t doc_to_extract = 0;
         // size_t use_heuristics = true;

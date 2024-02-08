@@ -106,7 +106,7 @@ int build_main(int argc, char** argv) {
     
     start = std::chrono::system_clock::now();
 
-    pfp_lcp lcp(pf, build_opts.output_ref, &ref_build, build_opts.missing_genomes + 1, build_opts.overlap);
+    pfp_lcp lcp(pf, build_opts.output_ref, &ref_build, build_opts.min_mum_len, build_opts.missing_genomes + 1, build_opts.overlap);
     DONE_LOG((std::chrono::system_clock::now() - start));
 
     // Print stats before closing out
@@ -227,6 +227,7 @@ void print_build_status_info(PFPDocBuildOptions* opts) {
     }
     std::fprintf(stderr, "\tOutput ref path: %s\n", opts->output_ref.data());
     std::fprintf(stderr, "\tPFP window size: %d\n", opts->pfp_w);
+    std::fprintf(stderr, "\tMinimum MUM length: %d\n", opts->min_mum_len);
     std::fprintf(stderr, "\tInclude rev-comp?: %d\n", opts->use_rcomp);
     std::fprintf(stderr, "\tfinding multi-MUMs present in N - %d genomes\n", opts->missing_genomes);
     if (opts->overlap && opts->missing_genomes > 0)
@@ -260,13 +261,14 @@ void parse_build_options(int argc, char** argv, PFPDocBuildOptions* opts) {
         // {"print-doc", required_argument, NULL, 'e'},
         // {"no-heuristic", no_argument, NULL, 'n'},
         {"modulus", required_argument, NULL, 'm'},
-        {"from-parse",   no_argument, NULL,  'l'},
+        {"from-parse",   no_argument, NULL,  's'},
+         {"min-mum-len",   optional_argument, NULL,  'l'},
         {0, 0, 0,  0}
     };
 
     int c = 0;
     int long_index = 0;
-    while ((c = getopt_long(argc, argv, "hf:o:w:rtk:pe:nm:", long_options, &long_index)) >= 0) {
+    while ((c = getopt_long(argc, argv, "hf:o:w:sl:rk:p:m:", long_options, &long_index)) >= 0) {
         switch(c) {
             case 'h': pfpdoc_build_usage(); std::exit(1);
             case 'f': opts->input_list.assign(optarg); break;
@@ -279,7 +281,8 @@ void parse_build_options(int argc, char** argv, PFPDocBuildOptions* opts) {
             // case 'e': opts->doc_to_extract = std::atoi(optarg); break;
             // case 'n': opts->use_heuristics = false; break;
             case 'm': opts->hash_mod = std::atoi(optarg); break;
-            case 'l': opts->from_parse = true; break;
+            case 's': opts->from_parse = true; break;
+            case 'l': opts->min_mum_len = std::atoi(optarg); break;
             default: pfpdoc_build_usage(); std::exit(1);
         }
     }
@@ -300,6 +303,7 @@ int pfpdoc_build_usage() {
     std::fprintf(stderr, "\t%-18s%-10spath to a file-list of genomes to use (overrides positional args)\n", "-f, --filelist", "[FILE]");
     std::fprintf(stderr, "\t%-18s%-10soutput prefix path if using -f option\n", "-o, --output", "[arg]");
     std::fprintf(stderr, "\t%-28sinclude the reverse-complement of sequence (default: false)\n\n", "-r, --revcomp");
+    std::fprintf(stderr, "\t%-28sminimum mum length (default: 20)\n\n", "-l, --min-mum-len");
 
     std::fprintf(stderr, "\t%-28sfind multi-MUMs in at least N - k genomes (default: 0, strict multi-MUM)\n\n", "-k, --missing-genomes");
 
@@ -312,7 +316,7 @@ int pfpdoc_build_usage() {
 
     std::fprintf(stderr, "\t%-18s%-10swindow size used for pfp (default: 10)\n", "-w, --window", "[INT]");
     std::fprintf(stderr, "\t%-18s%-10shash-modulus used for pfp (default: 100)\n\n", "-m, --modulus", "[INT]");
-    std::fprintf(stderr, "\t%-18s%-10suse pre-computed pf-parse\n\n", "-l, --from-parse");
+    std::fprintf(stderr, "\t%-18s%-10suse pre-computed pf-parse\n\n", "-s, --from-parse");
 
     return 0;
 }
