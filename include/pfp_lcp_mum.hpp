@@ -398,11 +398,11 @@ private:
     // size_t total_unique_bwt = 0;
 
     std::unordered_map<uint8_t,int> nucMap = {
-        {'A', 0},
-        {'C', 1},
-        {'G', 2},
-        {'T', 3},
-        {'N', 4},
+        {'A', 1},
+        {'C', 2},
+        {'G', 3},
+        {'T', 4},
+        {'N', 0}, // all default to this too
         {0, 5} //null char
     };
     // const int NUC_NUM = nucMap.size();
