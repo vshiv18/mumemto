@@ -396,7 +396,7 @@ private:
     unique_counter window_bwt;
     // size_t total_unique_bwt = 0;
 
-    const std::map<uint8_t,int> nucMap = {
+    std::unordered_map<uint8_t,int> nucMap = {
         {'A', 0},
         {'C', 1},
         {'G', 2},
@@ -404,7 +404,7 @@ private:
         {'N', 4},
         {0, 5} //null char
     };
-    const int NUC_NUM = nucMap.size();
+    // const int NUC_NUM = nucMap.size();
 
     // stores the current RMQ (avoiding recomputing)
     size_t mum_length = 0;
@@ -469,7 +469,7 @@ private:
 
     inline void update_bwt_window(uint8_t bwt_c, bool valid_window)
     {
-        int bwt_idx = nucMap.at(bwt_c);
+        int bwt_idx = nucMap[bwt_c];
         window_bwt.add(bwt_idx);
         if(valid_window)
         {
