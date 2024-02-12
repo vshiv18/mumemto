@@ -590,6 +590,9 @@ private:
                 else 
                     strand[doc] = '+';
             }
+            // temporarory fix: only write MUMs where 1st genome is + stranded
+            if (strand[0] == '-')
+                continue;
 
             mum_file << std::to_string(mum_length) << '\t';
             for (int i = 0; i < num_docs - 1; i++)
