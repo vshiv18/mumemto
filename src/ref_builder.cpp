@@ -129,7 +129,7 @@ RefBuilder::RefBuilder(std::string input_data, std::string output_prefix,
 
     // Declare needed parameters for reading/writing
     FILE* fp; kseq_t* seq;
-    std::vector<size_t> seq_lengths;
+    // std::vector<size_t> seq_lengths;
 
     // Start working on building the reference file by reading each file ...
     curr_id = 1;

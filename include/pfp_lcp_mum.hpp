@@ -66,27 +66,27 @@ struct unique_counter {
     // }
     void add(size_t d)
     {
-        if(windows.at(0).at(d))
+        if(windows[0][d])
         {
-            windows.at(0).at(d)++;
+            windows[0][d]++;
         }
         else
         {
-            windows.at(0).at(d) = 1;
-            total_unique.at(0)++;
+            windows[0][d] = 1;
+            total_unique[0]++;
         }
         for(int i = 1; i < total_unique.size(); i++){
             if (sliding_window.size() < i)
                 break;
-            d = sliding_window.at(sliding_window.size() - i);
-            if(windows.at(i).at(d))
+            d = sliding_window[sliding_window.size() - i];
+            if(windows[i][d])
             {
-                windows.at(i).at(d)++;
+                windows[i][d]++;
             }
             else
             {
-                windows.at(i).at(d) = 1;
-                total_unique.at(i)++;
+                windows[i][d] = 1;
+                total_unique[i]++;
             }
         }
     }
@@ -94,14 +94,14 @@ struct unique_counter {
     {
         // assert(windows[d] > 0);
         for(int i=0; i<windows.size(); i++){
-            if(windows.at(i).at(d) == 1)
+            if(windows[i][d] == 1)
             {
-                windows.at(i).at(d)--;
-                total_unique.at(i)--;
+                windows[i][d]--;
+                total_unique[i]--;
             }
             else
             {
-                windows.at(i).at(d)--;
+                windows[i][d]--;
             }
         }
     }
@@ -141,21 +141,26 @@ public:
     std::vector<size_t> min_s; // Value of the minimum lcp_T in each run of BWT_T
     std::vector<size_t> pos_s;    // Position of the minimum lcp_T in each run of BWT_T
 
-    const size_t MIN_MUM_LENGTH = 20;
+    size_t MIN_MUM_LENGTH;
 
     uint8_t head;
     size_t length = 0; // Length of the current run of BWT_T
     size_t num_docs = 0;
     // std::vector<uint8_t> heads;
-
+    std::vector<size_t> doc_offsets;
+    std::vector<size_t> doc_lens;
     size_t topk;
     bool overlap_mum;
+    bool revcomp;
 
-    pfp_lcp(pf_parsing &pfp_, std::string filename, RefBuilder* ref_build, size_t topk, bool overlap) : 
+    pfp_lcp(pf_parsing &pfp_, std::string filename, RefBuilder* ref_build, size_t min_mum_len, size_t topk, bool overlap) : 
                 pf(pfp_),
                 min_s(1, pf.n),
                 pos_s(1,0),
+                MIN_MUM_LENGTH(min_mum_len),
                 num_docs(ref_build->num_docs),
+                revcomp(ref_build->use_revcomp),
+                doc_lens(ref_build->seq_lengths),
                 head(0),
                 // bwt_window(num_docs),
                 // doc_window(num_docs),
@@ -165,9 +170,24 @@ public:
                 sa_window(num_docs),
                 lcp_pq(num_docs),
                 window_docs(num_docs, num_docs, topk),
-                window_bwt(5, num_docs, topk)
+                window_bwt(6, num_docs, topk),
+                doc_offsets(num_docs, 0)
                 // heads(1, 0)
     {
+        // get cumulative offset
+        size_t curr_sum = 0;
+        for (size_t i = 0; i < num_docs - 1; i++) {
+            curr_sum += doc_lens[i];
+            doc_offsets[i + 1] = curr_sum;
+        }
+        if (revcomp) {
+            for (auto i = 0; i < doc_lens.size(); i++) {
+                doc_lens[i] = doc_lens[i] / 2;
+            }
+        }
+        
+
+
         // Opening output files
         std::string outfile = filename + std::string(".lcp");
         if ((lcp_file = fopen(outfile.c_str(), "w")) == nullptr)
@@ -265,7 +285,7 @@ public:
 
                     if(valid_window)
                     {
-                        std::vector<int> idxs = is_mum();
+                        std::vector<std::pair<int, int>> idxs = is_mum();
                         if (idxs.size() > 0)
                             write_mum(idxs);
                         // std::cout << "MUM FOUND!" << std::endl; 
@@ -377,13 +397,15 @@ private:
     unique_counter window_bwt;
     // size_t total_unique_bwt = 0;
 
-    const std::map<uint8_t,int> nucMap = {
-        {'A', 0},
-        {'C', 1},
-        {'G', 2},
-        {'T', 3},
-        {0, 4} //null char
+    std::unordered_map<uint8_t,int> nucMap = {
+        {'A', 1},
+        {'C', 2},
+        {'G', 3},
+        {'T', 4},
+        {'N', 0}, // all default to this too
+        {0, 5} //null char
     };
+    // const int NUC_NUM = nucMap.size();
 
     // stores the current RMQ (avoiding recomputing)
     size_t mum_length = 0;
@@ -448,7 +470,7 @@ private:
 
     inline void update_bwt_window(uint8_t bwt_c, bool valid_window)
     {
-        int bwt_idx = nucMap.at(bwt_c);
+        int bwt_idx = nucMap[bwt_c];
         window_bwt.add(bwt_idx);
         if(valid_window)
         {
@@ -509,17 +531,19 @@ private:
         // return lcp_pq.front().first;
         return lcp_pq.min(i);
     }
-    inline std::vector<int> is_mum()
+    inline std::vector<std::pair<int, int>> is_mum()
     {
         // Check each condition: (check the fast conditions first, then compute RMQ if needed)
         // Check that every doc appears once
-        std::vector<int> mum_subset;
+    
+        // pair of window size and mum_length
+        std::vector<std::pair<int, int>> mum_subset;
         for(int i = 0; i < topk; i++)
         {
-            if(window_docs.total_unique.at(i) != (num_docs - i))
+            if(window_docs.total_unique[i] != (num_docs - i))
                 continue;
             // Check BWT chars in that range are not all identical (i.e. can be left extended by 1, not maximal)
-            if(window_bwt.total_unique.at(i) == 1)
+            if(window_bwt.total_unique[i] == 1)
                 continue;
             // check RMQ LCP of window > min_mum
             mum_length = rmq_of_window(i);
@@ -531,11 +555,11 @@ private:
             if (i == 0)
                 this_right_lcp = right_lcp;
             else
-                this_right_lcp = lcp_pq.sliding_window.at(lcp_pq.sliding_window.size() - i);
+                this_right_lcp = lcp_pq.sliding_window[lcp_pq.sliding_window.size() - i];
             if(lcp_pq.left_lcp >= mum_length || this_right_lcp >= mum_length)
                 continue;
 
-            mum_subset.push_back(i);
+            mum_subset.push_back(std::pair<int, int>(i, mum_length));
 
             if (!overlap_mum)
                 return mum_subset;
@@ -543,16 +567,55 @@ private:
         return mum_subset;
     }
 
-    inline void write_mum(std::vector<int> const &idxs)
+    inline void write_mum(std::vector<std::pair<int, int>> const &idxs)
     {
-
-        for (int idx : idxs){
-            mum_file << std::to_string(mum_length) << '\t';
-            for (int i = 0; i < num_docs - idx - 1; i++)
+        std::vector<int> offsets(num_docs);
+        std::vector<char> strand(num_docs);
+        int doc;
+        int idx;
+        int mum_length;
+        for (auto data : idxs){
+            idx = data.first;
+            mum_length = data.second;
+            std::fill(offsets.begin(), offsets.end(), -1);
+            std::fill(strand.begin(), strand.end(), 0);
+            for (int i = 0; i < num_docs - idx; i++)
             {
-                mum_file << sa_window.at(i) << ',';
+                doc = window_docs.sliding_window[i];
+                offsets[doc] = sa_window[i] - doc_offsets[doc];
+                if (revcomp && offsets[doc] >= doc_lens[doc]) {
+                    strand[doc] = '-';
+                    offsets[doc] = offsets[doc] - doc_lens[doc];
+                }
+                else 
+                    strand[doc] = '+';
             }
-            mum_file << sa_window.at(num_docs - idx - 1) << std::endl;
+
+            mum_file << std::to_string(mum_length) << '\t';
+            for (int i = 0; i < num_docs - 1; i++)
+            {
+                if (offsets[i] == -1) 
+                    mum_file << ',';
+                else
+                    mum_file << offsets[i] << ',';
+            }
+            if (offsets[num_docs - 1] == -1) 
+                mum_file << '\t';
+            else
+                mum_file << offsets[num_docs - 1] << '\t';
+
+            for (int i = 0; i < num_docs - 1; i++) {
+                if (offsets[i] == -1) 
+                    mum_file << ',';
+                else
+                    mum_file << strand[i] << ',';
+            }   
+            if (offsets[num_docs - 1] == -1) 
+                mum_file << std::endl;
+            else
+                mum_file << strand[num_docs - 1] << std::endl;
+            
+                
         }
         
         // for(auto it = sa_window.begin(); it != std::prev(sa_window.end()); ++it)

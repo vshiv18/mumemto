@@ -20,6 +20,8 @@ public:
 
     sdsl::bit_vector doc_ends;
     sdsl::rank_support_v<1> doc_ends_rank;
+    std::vector<size_t> seq_lengths;
+
     size_t num_docs = 0;
     size_t total_length = 0;
     
