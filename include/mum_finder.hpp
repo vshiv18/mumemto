@@ -161,6 +161,29 @@ public:
         mum_file.open(outfile);
     }
 
+    void close_file()
+    {
+        mum_file.close();
+    }
+
+    // main update function, takes in the current streamed value of each array and write mum if found
+    inline void update(size_t j, uint8_t bwt_c, size_t doc, size_t sa_entry, size_t lcp)
+    {
+        right_lcp = lcp;
+        
+        bool valid_window = sa_window.size() == num_docs;
+        if(valid_window)
+        {
+            mum_idxs = is_mum();
+            if (mum_idxs.size() > 0)
+                write_mum(mum_idxs);
+        }
+        update_lcp_window(right_lcp, valid_window);
+        update_sa_window(sa_entry, valid_window);
+        update_bwt_window(bwt_c, valid_window);
+        update_doc_window(doc, valid_window);
+    }
+
 private:    
 
     std::ofstream mum_file;
@@ -204,29 +227,6 @@ private:
     // int skip = 0;
     // int total_skips = 0;
     // skip = num_docs - 1;    <- comes after writing mum
-
-    // main update function, takes in the current streamed value of each array and write mum if found
-    inline void update(uint8_t bwt_c, size_t doc, size_t sa_entry, size_t lcp, bool valid_window)
-    {
-        right_lcp = lcp;
-        
-        bool valid_window = sa_window.size() == num_docs;
-        if(valid_window)
-        {
-            mum_idxs = is_mum();
-            if (mum_idxs.size() > 0)
-                write_mum(mum_idxs);
-        }
-        update_lcp_window(right_lcp, valid_window);
-        update_sa_window(sa_entry, valid_window);
-        update_bwt_window(bwt_c, valid_window);
-        update_doc_window(doc, valid_window);
-    }
-
-    inline void close_file()
-    {
-        mum_file.close();
-    }
 
     // update the 4 sliding windows with helper functions below
 

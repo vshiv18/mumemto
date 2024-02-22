@@ -66,6 +66,18 @@ public:
         mem_file.open(outfile);
     }
 
+    void close_file()
+    {
+        mem_file.close();
+    }
+
+    // main update function, takes in the current streamed value of each array and write mem if found
+    inline void update(size_t j, uint8_t bwt_c, size_t doc, size_t sa_entry, size_t lcp)
+    {
+        update_mems(j, lcp);
+        update_buffers(j, bwt_c, sa_entry, lcp, doc);
+    }
+
 private:    
 
     std::ofstream mem_file;
@@ -78,18 +90,6 @@ private:
     std::deque<size_t> da_buffer;
 
     std::vector<std::pair<size_t, size_t>> current_mems; // list of pairs, (start idx in SA, length of mem)
-
-    // main update function, takes in the current streamed value of each array and write mem if found
-    inline void update(size_t j, uint8_t bwt_c, size_t doc, size_t sa_entry, size_t lcp, bool valid_window)
-    {
-        update_mems(j, lcp);
-        update_buffers(j, bwt_c, sa_entry, lcp, doc);
-    }
-
-    inline void close_file()
-    {
-        mem_file.close();
-    }
 
     inline void update_mems(size_t j, size_t lcp)
     {

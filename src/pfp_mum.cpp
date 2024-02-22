@@ -308,11 +308,6 @@ int pfpdoc_build_usage() {
     std::fprintf(stderr, "\t%-28sfind multi-MUMs in at least N - k genomes (default: 0, strict multi-MUM)\n\n", "-k, --missing-genomes");
 
     std::fprintf(stderr, "\t%-28soutput subset multi-MUMs that overlap shorter, more complete multi-MUMs (default: true w/ -k)\n", "-p, --no-overlap");
-    // std::fprintf(stderr, "\t%-28suse top-k compression of the document array (default: false)\n", "-p, --top-k");
-    // std::fprintf(stderr, "\t%-18s%-10snumber of columns to include in the main table (default: 7)\n\n", "-k, --num-col", "[INT]");
-    
-    // std::fprintf(stderr, "\t%-18s%-10sdocument number whose profiles to extract\n", "-e, --print-doc", "[INT]");
-    // std::fprintf(stderr, "\t%-28sturn off any heuristics used to build profiles\n\n", "-n, --no-heuristic");
 
     std::fprintf(stderr, "\t%-18s%-10swindow size used for pfp (default: 10)\n", "-w, --window", "[INT]");
     std::fprintf(stderr, "\t%-18s%-10shash-modulus used for pfp (default: 100)\n\n", "-m, --modulus", "[INT]");
@@ -321,24 +316,30 @@ int pfpdoc_build_usage() {
     return 0;
 }
 
-// int pfpdoc_usage() {
-//     /* Prints the usage information for pfp_doc */
-//     std::fprintf(stderr, "\npfp_mum has different sub-commands to run:\n");
-//     std::fprintf(stderr, "Usage: pfp_mum <sub-command> [options]\n\n");
+int pfpdoc_usage() {
+    /* Prints the usage information for pfp_doc */
+    std::fprintf(stderr, "\nmumemto has different sub-commands to run:\n");
+    std::fprintf(stderr, "Usage: mumemto <sub-command> [options]\n\n");
 
-//     std::fprintf(stderr, "Commands:\n");
-//     std::fprintf(stderr, "\tbuild\tbuilds BWT/SA/LCP, and computes mums\n");
-//     // std::fprintf(stderr, "\trun\truns queries with respect to the document array structure\n");
-//     // std::fprintf(stderr, "\tinfo\tprint out information regarding this index and document array\n\n");
-//     return 0;
-// }
+    std::fprintf(stderr, "Commands:\n");
+    std::fprintf(stderr, "\tmum\tcomputes maximal unique matches (MUMs) in the collection of sequences\n");
+    std::fprintf(stderr, "\tmem\tcomputes maximal exact matches (MEMs) in the collection of sequences\n");
+    return 0;
+}
 
 int main(int argc, char** argv) {
-    /* main method for pfp_doc */
-    std::fprintf(stderr, "\033[1m\033[31m\npfp-mum version: %s\033[m\033[0m\n", PFPMUM_VERSION);
-
-    if (argc > 0) {
-        return build_main(argc, argv);
+    /* main method for mumemto */
+    std::fprintf(stderr, "\033[1m\033[31m\nmumemto version: %s\033[m\033[0m\n", PFPMUM_VERSION);
+    bool mum_mode;
+    if (argc > 1) {
+        if (std::strcmp(argv[1], "mum") == 0)
+            mum_mode = true;
+        else if (std::strcmp(argv[1], "mem") == 0)
+            mum_mode = false;
+        else
+            std::fprintf(stderr, "\nOne of [mum | mem] mode selection required!\n");
+            return pfpdoc_usage();
+        return build_main(argc-1, argv+1, mum_mode);
     }
-    return pfpdoc_build_usage();
+    return pfpdoc_usage();
 }
