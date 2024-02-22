@@ -17,7 +17,7 @@
 /*!
    \file pfp_lcp.hpp
    \brief pfp_lcp.hpp define and build the lcp from the prefix-free parsing.
-            Adapted by Vikram Shivakumar to compute Maximal Unique Matches (MUM) between sequences (12/20/2023)
+            Adapted by Vikram Shivakumar to compute Maximal Unique/Exact Matches (MUM/MEM) between sequences (12/20/2023)
    \author Massimiliano Rossi
    \date 01/07/2020
 */
@@ -85,7 +85,7 @@ public:
     }
 
     template <class T>
-    void process(T match_finder) {
+    void process(T &match_finder) {
         phrase_suffix_t curr;
         phrase_suffix_t prev;
 

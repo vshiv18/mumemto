@@ -7,8 +7,8 @@
  * Date: December 20th, 2023
  */
 
-#ifndef PFP_DOC_H
-#define PFP_DOC_H
+#ifndef PFP_MUM_H
+#define PFP_MUM_H
 
 #include <string>
 #include <iostream>
@@ -31,8 +31,6 @@
 // Defintions
 #define PFPMUM_VERSION "1.0.0"
 
-#define DOCWIDTH 2
-#define MAXQUEUELENGTH 1000000
 #define MAXLCPVALUE 65535 // 2^16 - 1
 #define MAXDOCS 65535
 
@@ -41,9 +39,9 @@
 
 
 /* Function declations */
-int pfpdoc_usage();
-int build_main(int argc, char** argv);
-int pfpdoc_build_usage();
+int mumemto_usage();
+int build_main(int argc, char** argv, bool mum_mode);
+int mumento_build_usage();
 int is_file(std::string path);
 int is_dir(std::string path);
 std::string  make_filelist(std::vector<std::string> files, std::string output_prefix);
@@ -53,7 +51,7 @@ bool endsWith(const std::string& str, const std::string& suffix);
 std::string execute_cmd(const char* cmd);
 
 
-struct PFPDocBuildOptions {
+struct BuildOptions {
     public:
         std::string input_list = "";
         std::string output_prefix = "";
@@ -65,13 +63,9 @@ struct PFPDocBuildOptions {
         // size_t threads = 0;
         bool is_fasta = true;
         size_t missing_genomes = 0;
-        // bool use_taxcomp = false;
         bool overlap = true;
         bool from_parse = false;
-        size_t min_mum_len = 20;
-        // size_t numcolsintable = 7;
-        // size_t doc_to_extract = 0;
-        // size_t use_heuristics = true;
+        size_t min_match_len = 20;
 
         void validate() {
             /* checks the arguments and make sure they are valid */
@@ -92,12 +86,7 @@ struct PFPDocBuildOptions {
             std::filesystem::path p (output_prefix);
             if (!is_dir(p.parent_path().string()))
                 FATAL_ERROR("Output path prefix is not in a valid directory."); 
-
-            // if (use_taxcomp && use_topk)
-            //     FATAL_ERROR("taxonomic and top-k compression cannot be used together.");   
-
-            // if (doc_to_extract > 0 && (use_taxcomp || use_topk)) 
-            //     FATAL_ERROR("cannot extract document array when using compression.");       
+   
         }
 };
 
@@ -125,8 +114,8 @@ public:
 };
 
 /* Function Declartions involving structs */
-void parse_build_options(int argc, char** argv, PFPDocBuildOptions* opts);
-void print_build_status_info(PFPDocBuildOptions* opts);
-void run_build_parse_cmd(PFPDocBuildOptions* build_opts, HelperPrograms* helper_bins);
+void parse_build_options(int argc, char** argv, BuildOptions* opts);
+void print_build_status_info(BuildOptions* opts, bool mum_mode);
+void run_build_parse_cmd(BuildOptions* build_opts, HelperPrograms* helper_bins);
 
-#endif /* End of PFP_DOC_H */
+#endif /* End of PFP_MUM_H */

@@ -1,5 +1,5 @@
-/* pfp_lcp - lcp from prefix free parsing 
-    Copyright (C) 2020 Massimiliano Rossi
+/* mumento - finding maximal matches with PFP
+    Copyright (C) 2024 Vikram Shivakumar
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -15,11 +15,10 @@
     along with this program.  If not, see http://www.gnu.org/licenses/ .
 */
 /*!
-   \file pfp_lcp.hpp
-   \brief pfp_lcp.hpp define and build the lcp from the prefix-free parsing.
-            Adapted by Vikram Shivakumar to compute Maximal Unique Matches (MUM) between sequences (12/20/2023)
-   \author Massimiliano Rossi
-   \date 01/07/2020
+   \file mum_finder.hpp
+   \brief mum_finder.hpp compute Maximal Unique Matches (MUMs) between sequences 
+   \author Vikram Shivakumar
+   \date 12/20/2023
 */
 
 
@@ -161,7 +160,7 @@ public:
         mum_file.open(outfile);
     }
 
-    void close_file()
+    void close()
     {
         mum_file.close();
     }
