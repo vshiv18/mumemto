@@ -303,7 +303,6 @@ public:
                     update_bwt_window(curr_bwt_ch, valid_window);
                     update_doc_window(doc_i, valid_window);
 
-
                     // assert(bwt_window.size() == num_docs);
                     // assert(doc_window.size() == num_docs);
                     // assert(sa_window.size() == num_docs);
