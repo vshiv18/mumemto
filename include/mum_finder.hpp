@@ -28,10 +28,9 @@
 
 #include <common.hpp>
 #include <ref_builder.hpp>
-#include <pfp.hpp>
 
 #include <unordered_map>
-#include <queue>
+#include <deque>
 #include <boost/circular_buffer.hpp>
 
 // build a struct for unique-counter-like types
