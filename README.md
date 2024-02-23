@@ -1,12 +1,12 @@
 # **mumento**: finding multi-MUMs and MEMs using prefix-free parsing for big BWTs
 
-<img src="logo.png" alt="logo" width="200"/>
-
+<img src="logo.png" alt="logo" width="280" align="left"/>
 This code is based on the [pfp-thresholds](https://github.com/maxrossi91/pfp-thresholds) repository written by [Massimiliano Rossi](https://github.com/maxrossi91) and [docprofiles](https://github.com/oma219/docprofiles) repository written by [Omar Ahmed](https://github.com/oma219). 
 
-This repository identifies **maximal unique matches (multi-MUMs)** present across a collection of sequences. Multi-MUMs are defined as maximally matching substrings present in each sequence in a collection *exactly once*. This method is uses the prefix-free parse (PFP) algorithm for suffix array construction on large, repetitive collections of text.
+This tool identifies **maximal unique matches (multi-MUMs)** present across a collection of sequences. Multi-MUMs are defined as maximally matching substrings present in each sequence in a collection *exactly once*. Additionally, this tool can identify **multi-MEMs**, maximal exact matches present across sequences, without the uniqueness property. This method is uses the prefix-free parse (PFP) algorithm for suffix array construction on large, repetitive collections of text.
 
-This tool uses PFP to efficiently identify multi-MUMs. Note that this applies only to highly repetitive texts (such as a collection of closely related genomes, likely intra-species such as a pangenome). We plan to support multi-MUM finding in more divergent sequences (inter-species, etc.) soon, however this would be less efficient without the PFP pre-processing step.
+This tool uses PFP to efficiently identify multi-MUM/MEMs. Note that this applies only to highly repetitive texts (such as a collection of closely related genomes, likely intra-species such as a pangenome). We plan to support multi-MUM/MEM finding in more divergent sequences (inter-species, etc.) soon, however this would be less efficient without the PFP pre-processing step.
+
 
 ## Installation
 
@@ -20,8 +20,6 @@ cd pfp-mum
 mkdir build 
 cd build && cmake ..
 make install
-
-export PFPMUM_BUILD_DIR=$(pwd)
 ```
 
 ## Getting started
