@@ -27,7 +27,7 @@
 
 int build_main(int argc, char** argv, bool mum_mode) {
     /* main method for finding matches */
-    if (argc == 1) return mumento_build_usage();
+    if (argc == 1) return mumemto_build_usage();
 
     // grab the command-line options, and validate them
     BuildOptions build_opts;
@@ -266,7 +266,7 @@ void parse_build_options(int argc, char** argv, BuildOptions* opts) {
     int long_index = 0;
     while ((c = getopt_long(argc, argv, "hf:o:w:sl:rk:p:m:", long_options, &long_index)) >= 0) {
         switch(c) {
-            case 'h': mumento_build_usage(); std::exit(1);
+            case 'h': mumemto_build_usage(); std::exit(1);
             case 'f': opts->input_list.assign(optarg); break;
             case 'o': opts->output_prefix.assign(optarg); break;
             case 'w': opts->pfp_w = std::atoi(optarg); break;
@@ -276,7 +276,7 @@ void parse_build_options(int argc, char** argv, BuildOptions* opts) {
             case 'm': opts->hash_mod = std::atoi(optarg); break;
             case 's': opts->from_parse = true; break;
             case 'l': opts->min_match_len = std::atoi(optarg); break;
-            default: mumento_build_usage(); std::exit(1);
+            default: mumemto_build_usage(); std::exit(1);
         }
     }
 
@@ -286,7 +286,7 @@ void parse_build_options(int argc, char** argv, BuildOptions* opts) {
 
 }
 
-int mumento_build_usage() {
+int mumemto_build_usage() {
     /* prints out the usage information for the build method */
     std::fprintf(stderr, "\nmumemto - find maximal [unique | exact] matches using PFP.\n");
     std::fprintf(stderr, "Usage: mumemto [mum | mem] [options] [input_fasta [...]]\n\n");
