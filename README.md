@@ -1,6 +1,6 @@
 # **mumento**: finding multi-MUMs and MEMs using prefix-free parsing for big BWTs
 
-![logo](logo.png "logo")
+<img src="logo.png" alt="logo" width="200"/>
 
 This code is based on the [pfp-thresholds](https://github.com/maxrossi91/pfp-thresholds) repository written by [Massimiliano Rossi](https://github.com/maxrossi91) and [docprofiles](https://github.com/oma219/docprofiles) repository written by [Omar Ahmed](https://github.com/oma219). 
 
