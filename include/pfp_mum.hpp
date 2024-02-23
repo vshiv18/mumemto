@@ -41,7 +41,7 @@
 /* Function declations */
 int mumemto_usage();
 int build_main(int argc, char** argv, bool mum_mode);
-int mumento_build_usage();
+int mumemto_build_usage();
 int is_file(std::string path);
 int is_dir(std::string path);
 std::string  make_filelist(std::vector<std::string> files, std::string output_prefix);
@@ -66,6 +66,7 @@ struct BuildOptions {
         bool overlap = true;
         bool from_parse = false;
         size_t min_match_len = 20;
+        size_t max_mem_freq = 0;
 
         void validate() {
             /* checks the arguments and make sure they are valid */

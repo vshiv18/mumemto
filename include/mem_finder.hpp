@@ -35,12 +35,13 @@ public:
 
     size_t MIN_MEM_LENGTH;
     size_t NUM_DISTINCT;
+    size_t MAX_FREQ;
     size_t num_docs = 0;
     std::vector<size_t> doc_offsets;
     std::vector<size_t> doc_lens;
     bool revcomp;
 
-    mem_finder(std::string filename, RefBuilder* ref_build, size_t min_mem_len, size_t num_distinct): 
+    mem_finder(std::string filename, RefBuilder* ref_build, size_t min_mem_len, size_t num_distinct, size_t max_freq): 
                 MIN_MEM_LENGTH(min_mem_len),
                 num_docs(ref_build->num_docs),
                 revcomp(ref_build->use_revcomp),
@@ -61,6 +62,8 @@ public:
         }
         // Initialize stack
         current_mems.push_back(std::make_pair(0, 0));
+        
+        this->MAX_FREQ = num_docs + max_freq;
 
         // Opening output file
         std::string outfile = filename + std::string(".mems");
@@ -102,7 +105,10 @@ private:
         while (lcp < current_mems.back().second) {
             interval = current_mems.back();
             current_mems.pop_back();
-            if (interval.second > MIN_MEM_LENGTH && j - interval.first >= NUM_DISTINCT && !check_bwt_range(interval.first, j-1) && check_doc_range(interval.first, j-1))
+            if (interval.second > MIN_MEM_LENGTH && 
+                j - interval.first >= NUM_DISTINCT && 
+                j - interval.first <= MAX_FREQ &&
+                !check_bwt_range(interval.first, j-1) && check_doc_range(interval.first, j-1))
                 write_mem(interval.second, interval.first, j - 1);
             start = interval.first;
             count++;

@@ -101,7 +101,7 @@ int build_main(int argc, char** argv, bool mum_mode) {
     }
     else {
         STATUS_LOG("build_main", "finding multi-MEMs from pfp");
-        mem_finder match_finder(build_opts.output_ref, &ref_build, build_opts.min_match_len, ref_build.num_docs - build_opts.missing_genomes);
+        mem_finder match_finder(build_opts.output_ref, &ref_build, build_opts.min_match_len, ref_build.num_docs - build_opts.missing_genomes, build_opts.max_mem_freq);
         lcp.process(match_finder);
         match_finder.close();
     }
@@ -229,9 +229,11 @@ void print_build_status_info(BuildOptions* opts, bool mum_mode) {
     std::string match_type = mum_mode ? "MUM" : "MEM";
     std::fprintf(stderr, "\tOutput ref path: %s\n", opts->output_ref.data());
     std::fprintf(stderr, "\tPFP window size: %d\n", opts->pfp_w);
-    std::fprintf(stderr, "\tMinimum %s length: %d\n", match_type, opts->min_match_len);
+    std::fprintf(stderr, "\tMinimum %s length: %d\n", match_type.data(), opts->min_match_len);
     std::fprintf(stderr, "\tInclude reverse complement?: %d\n", opts->use_rcomp);
-    std::fprintf(stderr, "\tfinding multi-%ss present in N - %d genomes\n", match_type, opts->missing_genomes);
+    std::fprintf(stderr, "\tfinding multi-%ss present in N - %d genomes\n", match_type.data(), opts->missing_genomes);
+    if (!mum_mode && opts->max_mem_freq > 0)
+        std::fprintf(stderr, "\t\t- excluding multi-MEMs that occur more than N + %d times\n", opts->max_mem_freq);
     if (opts->overlap && opts->missing_genomes > 0 && mum_mode)
         std::fprintf(stderr, "\t\t- including overlapping multi-MUMs\n");
 }
@@ -252,22 +254,23 @@ void parse_build_options(int argc, char** argv, BuildOptions* opts) {
 
     static struct option long_options[] = {
         {"help",      no_argument, NULL,  'h'},
-        {"filelist",   required_argument, NULL,  'f'},
+        {"input",   required_argument, NULL,  'i'},
         {"output",       required_argument, NULL,  'o'},
         {"revcomp",   no_argument, NULL,  'r'},
         {"missing-genomes",   optional_argument, NULL,  'k'},
         {"no-overlap",   no_argument, NULL,  'p'},
         {"modulus", required_argument, NULL, 'm'},
         {"from-parse",   no_argument, NULL,  's'},
-         {"min-match-len",   optional_argument, NULL,  'l'},
+        {"min-match-len",   optional_argument, NULL,  'l'},
+        {"max-freq",   optional_argument, NULL,  'f'},
         {0, 0, 0,  0}
     };
     int c = 0;
     int long_index = 0;
-    while ((c = getopt_long(argc, argv, "hf:o:w:sl:rk:p:m:", long_options, &long_index)) >= 0) {
+    while ((c = getopt_long(argc, argv, "hi:f:o:w:sl:rk:p:m:", long_options, &long_index)) >= 0) {
         switch(c) {
             case 'h': mumemto_build_usage(); std::exit(1);
-            case 'f': opts->input_list.assign(optarg); break;
+            case 'i': opts->input_list.assign(optarg); break;
             case 'o': opts->output_prefix.assign(optarg); break;
             case 'w': opts->pfp_w = std::atoi(optarg); break;
             case 'r': opts->use_rcomp = true; break;
@@ -276,6 +279,7 @@ void parse_build_options(int argc, char** argv, BuildOptions* opts) {
             case 'm': opts->hash_mod = std::atoi(optarg); break;
             case 's': opts->from_parse = true; break;
             case 'l': opts->min_match_len = std::atoi(optarg); break;
+            case 'f': opts->max_mem_freq = std::atoi(optarg); break;
             default: mumemto_build_usage(); std::exit(1);
         }
     }
@@ -293,14 +297,14 @@ int mumemto_build_usage() {
 
     std::fprintf(stderr, "Options:\n");
     std::fprintf(stderr, "\t%-28sprints this usage message\n", "-h, --help");
-    std::fprintf(stderr, "\t%-18s%-10spath to a file-list of genomes to use (overrides positional args)\n", "-f, --filelist", "[FILE]");
-    std::fprintf(stderr, "\t%-18s%-10soutput prefix path if using -f option\n", "-o, --output", "[arg]");
+    std::fprintf(stderr, "\t%-18s%-10spath to a file-list of genomes to use (overrides positional args)\n", "-i, --input", "[FILE]");
+    std::fprintf(stderr, "\t%-18s%-10soutput prefix path\n", "-o, --output", "[arg]");
     std::fprintf(stderr, "\t%-28sinclude the reverse-complement of sequence (default: false)\n\n", "-r, --revcomp");
     std::fprintf(stderr, "\t%-28sminimum MUM or MEM length (default: 20)\n\n", "-l, --min-match-len");
 
     std::fprintf(stderr, "\t%-28sfind multi-MUMs or multi-MEMs in at least N - k genomes\n\t%-28s(default: 0, match must occur in all sequences, i.e. strict multi-MUM/MEM)\n\n", "-k, --missing-genomes","");
     std::fprintf(stderr, "\t%-28soutput subset multi-MUMs that overlap shorter, more complete multi-MUMs\n\t%-28s(not applicable in MEM mode) (default: true w/ -k)\n", "-p, --no-overlap","");
-
+    std::fprintf(stderr, "\t%-28smaximum number of occurences of MEM, beyond the number of sequences\n\t%-28s(not applicable in MUM mode)\n", "-f, --max-freq", "");
     std::fprintf(stderr, "PFP options:\n");
     std::fprintf(stderr, "\t%-18s%-10swindow size used for pfp (default: 10)\n", "-w, --window", "[INT]");
     std::fprintf(stderr, "\t%-18s%-10shash-modulus used for pfp (default: 100)\n\n", "-m, --modulus", "[INT]");
