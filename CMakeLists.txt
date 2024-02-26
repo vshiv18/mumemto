@@ -11,7 +11,7 @@ endif()
 
 # About this project
 # ------------------------------------------------------------------------------
-project(pfp-doc-profile)
+project(pfp-mum)
 SET(VERSION_MAJOR "1")
 SET(VERSION_MINOR "0")
 SET(VERSION_PATCH "0")
@@ -54,6 +54,6 @@ endif()
 add_subdirectory(include)
 add_subdirectory(src)
 
-install(TARGETS pfp_mum64 DESTINATION ${PROJECT_BINARY_DIR})
+install(TARGETS mumemto DESTINATION ${PROJECT_BINARY_DIR})
 install(TARGETS newscanNT.x pscan.x newscan.x 
         DESTINATION ${PROJECT_BINARY_DIR}/bin)

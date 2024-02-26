@@ -88,9 +88,11 @@ struct BuildOptions {
                 }
             }
             std::filesystem::path p (output_prefix);
-            if (!is_dir(p.parent_path().string()))
+            if (p.parent_path().string().empty() && !p.string().empty())
+                output_prefix = "./" + output_prefix;
+            else if (!is_dir(p.parent_path().string()))
                 FATAL_ERROR("Output path prefix is not in a valid directory."); 
-   
+
         }
 };
 

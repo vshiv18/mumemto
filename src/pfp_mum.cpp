@@ -226,7 +226,7 @@ void print_build_status_info(BuildOptions* opts, bool mum_mode) {
         std::fprintf(stderr, "%s,", opts->files.at(1).data());
         std::fprintf(stderr, " ... ,", opts->files.at(1).data());
         std::fprintf(stderr, "%s,", opts->files.at(opts->files.size() - 2).data());
-        std::fprintf(stderr, "%s,", opts->files.at(opts->files.size() - 1).data());
+        std::fprintf(stderr, "%s\n", opts->files.at(opts->files.size() - 1).data());
     }
     else {
         std::fprintf(stderr, "\tInput files: ");
