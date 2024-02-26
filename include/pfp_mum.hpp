@@ -45,6 +45,7 @@ int mumemto_build_usage();
 int is_file(std::string path);
 int is_dir(std::string path);
 std::string  make_filelist(std::vector<std::string> files, std::string output_prefix);
+void remove_temp_files(std::string filename);
 std::vector<std::string> split(std::string input, char delim);
 bool is_integer(const std::string& str);
 bool endsWith(const std::string& str, const std::string& suffix);
@@ -62,6 +63,8 @@ struct BuildOptions {
         size_t hash_mod = 100;
         // size_t threads = 0;
         bool is_fasta = true;
+        bool arrays_out = false;
+        bool keep_temp = false;
         size_t missing_genomes = 0;
         bool overlap = true;
         bool from_parse = false;

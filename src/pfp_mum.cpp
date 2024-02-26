@@ -80,7 +80,7 @@ int build_main(int argc, char** argv, bool mum_mode) {
 
     std::cerr << "\n";
 
-    // Builds the BWT, SA, LCP, and document array profiles and writes to a file
+    // Builds the BWT, SA, LCP, and MUMs and writes to a file
 
     if (build_opts.missing_genomes >= ref_build.num_docs - 1)
     {
@@ -92,16 +92,16 @@ int build_main(int argc, char** argv, bool mum_mode) {
     
     start = std::chrono::system_clock::now();
 
-    pfp_lcp lcp(pf, build_opts.output_ref, &ref_build);
+    pfp_lcp lcp(pf, build_opts.output_prefix, &ref_build, build_opts.arrays_out);
     if (mum_mode){
         STATUS_LOG("build_main", "finding multi-MUMs from pfp");
-        mum_finder match_finder(build_opts.output_ref, &ref_build, build_opts.min_match_len, build_opts.missing_genomes + 1, build_opts.overlap);
+        mum_finder match_finder(build_opts.output_prefix, &ref_build, build_opts.min_match_len, build_opts.missing_genomes + 1, build_opts.overlap);
         lcp.process(match_finder);
         match_finder.close();
     }
     else {
         STATUS_LOG("build_main", "finding multi-MEMs from pfp");
-        mem_finder match_finder(build_opts.output_ref, &ref_build, build_opts.min_match_len, ref_build.num_docs - build_opts.missing_genomes, build_opts.max_mem_freq);
+        mem_finder match_finder(build_opts.output_prefix, &ref_build, build_opts.min_match_len, ref_build.num_docs - build_opts.missing_genomes, build_opts.max_mem_freq);
         lcp.process(match_finder);
         match_finder.close();
     }
@@ -110,8 +110,10 @@ int build_main(int argc, char** argv, bool mum_mode) {
 
     DONE_LOG((std::chrono::system_clock::now() - start));
 
-    // Print stats before closing out
     FORCE_LOG("build_main", "finished computing matches");
+
+    if (!build_opts.keep_temp)
+        remove_temp_files(build_opts.output_ref);
     std::cerr << "\n";
     
     return 0;
@@ -218,6 +220,14 @@ void print_build_status_info(BuildOptions* opts, bool mum_mode) {
     std::fprintf(stderr, "\nOverview of Parameters:\n");
     if (opts->input_list.length())
         std::fprintf(stderr, "\tInput file-list: %s\n", opts->input_list.data());
+    else if (opts->files.size() > 5) {
+        std::fprintf(stderr, "\tInput files: ");
+        std::fprintf(stderr, "%s,", opts->files.at(0).data());
+        std::fprintf(stderr, "%s,", opts->files.at(1).data());
+        std::fprintf(stderr, " ... ,", opts->files.at(1).data());
+        std::fprintf(stderr, "%s,", opts->files.at(opts->files.size() - 2).data());
+        std::fprintf(stderr, "%s,", opts->files.at(opts->files.size() - 1).data());
+    }
     else {
         std::fprintf(stderr, "\tInput files: ");
         for (int i = 0; i < opts->files.size() - 1; i++)
@@ -229,9 +239,13 @@ void print_build_status_info(BuildOptions* opts, bool mum_mode) {
     std::string match_type = mum_mode ? "MUM" : "MEM";
     std::fprintf(stderr, "\tOutput ref path: %s\n", opts->output_ref.data());
     std::fprintf(stderr, "\tPFP window size: %d\n", opts->pfp_w);
+    if (opts->arrays_out) {std::fprintf(stderr, "\tWriting LCP, BWT and run-sampled suffix arrays\n");}
     std::fprintf(stderr, "\tMinimum %s length: %d\n", match_type.data(), opts->min_match_len);
     std::fprintf(stderr, "\tInclude reverse complement?: %d\n", opts->use_rcomp);
-    std::fprintf(stderr, "\tfinding multi-%ss present in N - %d genomes\n", match_type.data(), opts->missing_genomes);
+    if (opts->missing_genomes == 0)
+        std::fprintf(stderr, "\tfinding multi-%ss present in all genomes\n", match_type.data(), opts->missing_genomes);
+    else
+        std::fprintf(stderr, "\tfinding multi-%ss present in N - %d genomes\n", match_type.data(), opts->missing_genomes);
     if (!mum_mode && opts->max_mem_freq > 0)
         std::fprintf(stderr, "\t\t- excluding multi-MEMs that occur more than N + %d times\n", opts->max_mem_freq);
     if (opts->overlap && opts->missing_genomes > 0 && mum_mode)
@@ -246,6 +260,14 @@ std::string make_filelist(std::vector<std::string> files, std::string output_pre
     }
     outfile.close();
     return fname;
+}
+
+void remove_temp_files(std::string filename) {
+    std::vector<std::string> temp_files = {".dict", ".occ", ".parse_old", ".last", ".parse"};
+    for (auto &ext : temp_files) {
+        std::filesystem::remove(std::filesystem::path(filename + ext));
+    }
+    std::filesystem::remove(std::filesystem::path(filename));
 }
 
 
@@ -263,11 +285,13 @@ void parse_build_options(int argc, char** argv, BuildOptions* opts) {
         {"from-parse",   no_argument, NULL,  's'},
         {"min-match-len",   optional_argument, NULL,  'l'},
         {"max-freq",   optional_argument, NULL,  'f'},
+        {"arrays-out",   no_argument, NULL,  'a'},
+        {"keep-temp-files",   no_argument, NULL,  'K'},
         {0, 0, 0,  0}
     };
     int c = 0;
     int long_index = 0;
-    while ((c = getopt_long(argc, argv, "hi:f:o:w:sl:rk:p:m:", long_options, &long_index)) >= 0) {
+    while ((c = getopt_long(argc, argv, "hi:f:o:w:sl:raKk:p:m:", long_options, &long_index)) >= 0) {
         switch(c) {
             case 'h': mumemto_build_usage(); std::exit(1);
             case 'i': opts->input_list.assign(optarg); break;
@@ -280,6 +304,8 @@ void parse_build_options(int argc, char** argv, BuildOptions* opts) {
             case 's': opts->from_parse = true; break;
             case 'l': opts->min_match_len = std::atoi(optarg); break;
             case 'f': opts->max_mem_freq = std::atoi(optarg); break;
+            case 'a': opts->arrays_out = true; break;
+            case 'K': opts->keep_temp = true; break;
             default: mumemto_build_usage(); std::exit(1);
         }
     }
@@ -301,14 +327,20 @@ int mumemto_build_usage() {
     std::fprintf(stderr, "\t%-18s%-10soutput prefix path\n", "-o, --output", "[arg]");
     std::fprintf(stderr, "\t%-28sinclude the reverse-complement of sequence (default: false)\n\n", "-r, --revcomp");
     std::fprintf(stderr, "\t%-28sminimum MUM or MEM length (default: 20)\n\n", "-l, --min-match-len");
+    std::fprintf(stderr, "\t%-28swrite LCP, BWT, and SA (run-sampled) to file\n\n", "-a, --arrays-out");
 
     std::fprintf(stderr, "\t%-28sfind multi-MUMs or multi-MEMs in at least N - k genomes\n\t%-28s(default: 0, match must occur in all sequences, i.e. strict multi-MUM/MEM)\n\n", "-k, --missing-genomes","");
-    std::fprintf(stderr, "\t%-28soutput subset multi-MUMs that overlap shorter, more complete multi-MUMs\n\t%-28s(not applicable in MEM mode) (default: true w/ -k)\n", "-p, --no-overlap","");
-    std::fprintf(stderr, "\t%-28smaximum number of occurences of MEM, beyond the number of sequences\n\t%-28s(not applicable in MUM mode)\n", "-f, --max-freq", "");
+    std::fprintf(stderr, "MUM mode options:\n");
+    std::fprintf(stderr, "\t%-28soutput subset multi-MUMs that overlap shorter, more complete multi-MUMs (default: true w/ -k)\n", "-p, --no-overlap");
+    
+    std::fprintf(stderr, "MEM mode options:\n");
+    std::fprintf(stderr, "\t%-28smaximum number of occurences of MEM, beyond the number of sequences\n", "-f, --max-freq");
+
     std::fprintf(stderr, "PFP options:\n");
     std::fprintf(stderr, "\t%-18s%-10swindow size used for pfp (default: 10)\n", "-w, --window", "[INT]");
     std::fprintf(stderr, "\t%-18s%-10shash-modulus used for pfp (default: 100)\n\n", "-m, --modulus", "[INT]");
     std::fprintf(stderr, "\t%-28suse pre-computed pf-parse\n\n", "-s, --from-parse");
+    std::fprintf(stderr, "\t%-28skeep PFP files\n\n", "-K, --keep-temp-files");
 
     return 0;
 }

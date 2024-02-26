@@ -101,7 +101,6 @@ private:
         // j = idx in SA
         size_t start = j - 1;
         std::pair<size_t, size_t> interval;
-        int count = 0;
         while (lcp < current_mems.back().second) {
             interval = current_mems.back();
             current_mems.pop_back();
@@ -111,7 +110,6 @@ private:
                 !check_bwt_range(interval.first, j-1) && check_doc_range(interval.first, j-1))
                 write_mem(interval.second, interval.first, j - 1);
             start = interval.first;
-            count++;
         }
         if (lcp > current_mems.back().second) {
             if (lcp >= MIN_MEM_LENGTH)

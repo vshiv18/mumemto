@@ -48,40 +48,46 @@ public:
     uint8_t head;
     size_t length = 0; // Length of the current run of BWT_T
     RefBuilder* ref_build;
+    bool write_arrays;
 
-    pfp_lcp(pf_parsing &pfp_, std::string filename, RefBuilder* ref_build) : 
+    pfp_lcp(pf_parsing &pfp_, std::string filename, RefBuilder* ref_build, bool write_arrays) : 
                 pf(pfp_),
                 min_s(1, pf.n),
                 pos_s(1,0),
                 head(0),
-                ref_build(ref_build)
+                ref_build(ref_build),
+                write_arrays(write_arrays)
     {
         // Opening output files
-        std::string outfile = filename + std::string(".lcp");
-        if ((lcp_file = fopen(outfile.c_str(), "w")) == nullptr)
-            error("open() file " + outfile + " failed");
+        if (write_arrays) {
+            std::string outfile = filename + std::string(".lcp");
+            if ((lcp_file = fopen(outfile.c_str(), "w")) == nullptr)
+                error("open() file " + outfile + " failed");
 
-        outfile = filename + std::string(".ssa");
-        if ((ssa_file = fopen(outfile.c_str(), "w")) == nullptr)
-            error("open() file " + outfile + " failed");
+            outfile = filename + std::string(".ssa");
+            if ((ssa_file = fopen(outfile.c_str(), "w")) == nullptr)
+                error("open() file " + outfile + " failed");
 
-        outfile = filename + std::string(".esa");
-        if ((esa_file = fopen(outfile.c_str(), "w")) == nullptr)
-            error("open() file " + outfile + " failed");
+            outfile = filename + std::string(".esa");
+            if ((esa_file = fopen(outfile.c_str(), "w")) == nullptr)
+                error("open() file " + outfile + " failed");
 
-        outfile = filename + std::string(".bwt");
-        if ((bwt_file = fopen(outfile.c_str(), "w")) == nullptr)
-            error("open() file " + outfile + " failed");
-
+            outfile = filename + std::string(".bwt");
+            if ((bwt_file = fopen(outfile.c_str(), "w")) == nullptr)
+                error("open() file " + outfile + " failed");
+        }
         assert(pf.dict.d[pf.dict.saD[0]] == EndOfDict);
     }
 
     void close() {
         // Close output files
-        fclose(ssa_file);
-        fclose(esa_file);
-        fclose(bwt_file);
-        fclose(lcp_file);
+        if (write_arrays) {
+            fclose(ssa_file);
+            fclose(esa_file);
+            fclose(bwt_file);
+            fclose(lcp_file);
+        }
+        
     }
 
     template <class T>
@@ -143,14 +149,13 @@ public:
                     }
                     first = false;
                     // Update min_s
-                    print_lcp(lcp_suffix, j);
-
+                    if (write_arrays)
+                        print_lcp(lcp_suffix, j);
                     update_ssa(curr, *curr_occ.first);
-
-                    update_bwt(curr_occ.second.second, 1);
-
-                    update_esa(curr, *curr_occ.first);
-
+                    if (write_arrays) {
+                        update_bwt(curr_occ.second.second, 1);
+                        update_esa(curr, *curr_occ.first);
+                    }
                     // Start of MUM computation code
                     uint8_t curr_bwt_ch = curr_occ.second.second;
                     size_t sa_i = ssa;
@@ -183,8 +188,10 @@ public:
             }
         }
         // print last BWT char and SA sample
-        print_sa();
-        print_bwt();
+        if (write_arrays) {
+            print_sa();
+            print_bwt();
+        }
     }
 
 
