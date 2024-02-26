@@ -69,7 +69,7 @@ struct BuildOptions {
         bool overlap = true;
         bool from_parse = false;
         size_t min_match_len = 20;
-        size_t max_mem_freq = 0;
+        int max_mem_freq = -1;
 
         void validate() {
             /* checks the arguments and make sure they are valid */
@@ -93,6 +93,8 @@ struct BuildOptions {
             else if (!is_dir(p.parent_path().string()))
                 FATAL_ERROR("Output path prefix is not in a valid directory."); 
 
+            if (max_mem_freq < -1)
+                FATAL_ERROR("Maximum MEM frequency cannot be negative (-1 indicates no limit on MEM frequency)"); 
         }
 };
 

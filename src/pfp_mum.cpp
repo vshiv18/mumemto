@@ -246,7 +246,7 @@ void print_build_status_info(BuildOptions* opts, bool mum_mode) {
         std::fprintf(stderr, "\tfinding multi-%ss present in all genomes\n", match_type.data(), opts->missing_genomes);
     else
         std::fprintf(stderr, "\tfinding multi-%ss present in N - %d genomes\n", match_type.data(), opts->missing_genomes);
-    if (!mum_mode && opts->max_mem_freq > 0)
+    if (!mum_mode && opts->max_mem_freq >= 0)
         std::fprintf(stderr, "\t\t- excluding multi-MEMs that occur more than N + %d times\n", opts->max_mem_freq);
     if (opts->overlap && opts->missing_genomes > 0 && mum_mode)
         std::fprintf(stderr, "\t\t- including overlapping multi-MUMs\n");
@@ -334,7 +334,7 @@ int mumemto_build_usage() {
     std::fprintf(stderr, "\t%-28soutput subset multi-MUMs that overlap shorter, more complete multi-MUMs (default: true w/ -k)\n", "-p, --no-overlap");
     
     std::fprintf(stderr, "MEM mode options:\n");
-    std::fprintf(stderr, "\t%-28smaximum number of occurences of MEM, beyond the number of sequences\n", "-f, --max-freq");
+    std::fprintf(stderr, "\t%-28smaximum number of occurences of MEM, beyond N \n\t%-28s(default: -1, no upper limit. Note: -k 0 -f 0 will result in strict multi-MUMs)\n", "-f, --max-freq", "");
 
     std::fprintf(stderr, "PFP options:\n");
     std::fprintf(stderr, "\t%-18s%-10swindow size used for pfp (default: 10)\n", "-w, --window", "[INT]");
