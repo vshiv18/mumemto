@@ -11,7 +11,7 @@ This tool uses PFP to efficiently identify multi-MUM/MEMs. Note that this applie
 ## Installation
 
 For starting out, use the commands below to download the repository and build the executable. After running the make command below,
-the `pfp_mum` executable will be found in the `build/` folder.
+the `mumemto` executable will be found in the `build/` folder.
 
 ```sh
 git clone git@github.com:vshiv18/pfp-mum.git
@@ -24,20 +24,25 @@ make install
 
 ## Getting started
 
-The basic workflow with `pfp_mum` is to compute the PFP over a collection of sequences, and identify multi-MUMs while computing the SA/LCP/BWT of the input collection. 
+The basic workflow with `mumemto` is to compute the PFP over a collection of sequences, and identify multi-MUMs while computing the SA/LCP/BWT of the input collection. 
 
 ### Find multi-MUMs
 
 ```sh
-pfp_mum -f <input_list> -o <output_prefix>
+mumemto mum -o <output_prefix> [input_fasta [...]]
 ```
-or 
+Alternatively, you can find all multi-MEMs:
 ```sh
-pfp_mum -o <output_prefix> [input_fasta [...]]
+mumemto mem -o <output_prefix> [input_fasta [...]]
 ```
 
-The command above takes in a file-list of multiple genomes or a list of positional arguments and then generates output files using the output prefix. In the file-list, you can specify a list of 
-genomes and then specify which document/class each genome belongs in. If you pass in fastas as positional arguments, a filelist will be created which contains the order of the sequences in the output *.mums* file.
+The command above takes in a list of fasta files as positional arguments and then generates output files using the output prefix. Alternatively, you can provide a file-list, which specifies a list of fastas and which document/class each file belongs in. Passing in fastas as positional arguments will auto-generate a filelist that defines the order of the sequences.
+
+Use the `-h` flag to list the parameters and flags for each mode:
+```sh
+mumemto mum -h
+```
+
 
 **Example of file-list file:**
 ```sh
@@ -53,4 +58,12 @@ genomes and then specify which document/class each genome belongs in. If you pas
 ```
 The `*.mums` file contains each MUM as a separate line, where the first value is the match length, and the second is 
 a comma-delimited list of positions where the match begins in each sequence. An empty entry indicates that the MUM was not found in that sequence (only applicable with *-k* flag). The MUMs are sorted in the output file
+lexicographically based on the match sequence.
+
+**Format of the \*.mems file:**
+```sh
+[MEM length] [comma-delimited list of offsets for each occurence] [comma-delimited list of sequence IDs, as defined in the filelist] [comma-delimited strand indicators (one of +/-)]
+```
+The `*.mems` file contains each MEM as a separate line with the following fields: (1) the match length, (2)
+a comma-delimited list of offsets within a sequence, (3) the corresponding sequence ID for each offset given in (2). The MEMs are sorted in the output file
 lexicographically based on the match sequence.
