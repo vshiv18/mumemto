@@ -14,7 +14,7 @@ For starting out, use the commands below to download the repository and build th
 the `mumemto` executable will be found in the `build/` folder.
 
 ```sh
-git clone git@github.com:vshiv18/pfp-mum.git
+git clone git@github.com:vshiv18/pfp-mum.git -b mem
 cd pfp-mum
 
 mkdir build 
