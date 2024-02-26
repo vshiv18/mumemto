@@ -55,7 +55,7 @@ std::string execute_cmd(const char* cmd);
 struct BuildOptions {
     public:
         std::string input_list = "";
-        std::string output_prefix = "";
+        std::string output_prefix = "output";
         std::string output_ref = "";
         std::vector<std::string> files;
         bool use_rcomp = false;
