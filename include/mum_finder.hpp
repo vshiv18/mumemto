@@ -288,7 +288,7 @@ private:
             // check RMQ LCP of window > min_mum
             mum_length = rmq_of_window(i);
             // long enough MUM
-            if(mum_length < MIN_MUM_LENGTH)
+            if(mum_length <= MIN_MUM_LENGTH)
                 continue;
             // Suffix preceding and succeding window don't share long enough prefix (mum is not unique!)
             size_t this_right_lcp;
