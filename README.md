@@ -38,7 +38,7 @@ mumemto mem -o <output_prefix> [input_fasta [...]]
 
 The command above takes in a list of fasta files as positional arguments and then generates output files using the output prefix. Alternatively, you can provide a file-list, which specifies a list of fastas and which document/class each file belongs in. Passing in fastas as positional arguments will auto-generate a filelist that defines the order of the sequences.
 
-Use the `-h` flag to list the parameters and flags for each mode:
+Use the `-h` flag to list the options for each mode:
 ```sh
 mumemto mum -h
 ```
