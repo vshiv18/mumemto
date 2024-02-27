@@ -112,6 +112,7 @@ private:
         while (lcp < current_mems.back().second) {
             interval = current_mems.back();
             current_mems.pop_back();
+            std::cout << interval.second << ", " << j - interval.first << ", " << !check_bwt_range(interval.first, j-1) << ", " << check_doc_range(interval.first, j-1) << std::endl;
             if (interval.second >= MIN_MEM_LENGTH && 
                 j - interval.first >= NUM_DISTINCT && 
                 (no_max_freq || j - interval.first <= MAX_FREQ) &&
@@ -137,12 +138,12 @@ private:
         //     it++;
         //     if (*it != cur_char)
         //     {
-        //         std::cout <<"good range: "<< last_bwt_change <<", " << start << ", " << end << std::endl;
+        //         // std::cout <<"good range: "<< last_bwt_change <<", " << start << ", " << end << std::endl;
         //         return false;
         //     }
         //     idx++;
         // }
-        // std::cout <<"bad range: "<< last_bwt_change <<", " << start << ", " << end << std::endl;
+        // // std::cout <<"bad range: "<< last_bwt_change <<", " << start << ", " << end << std::endl;
         // return true;
     }
 

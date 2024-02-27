@@ -64,12 +64,8 @@ public:
             if ((lcp_file = fopen(outfile.c_str(), "w")) == nullptr)
                 error("open() file " + outfile + " failed");
 
-            outfile = filename + std::string(".ssa");
-            if ((ssa_file = fopen(outfile.c_str(), "w")) == nullptr)
-                error("open() file " + outfile + " failed");
-
-            outfile = filename + std::string(".esa");
-            if ((esa_file = fopen(outfile.c_str(), "w")) == nullptr)
+            outfile = filename + std::string(".sa");
+            if ((sa_file = fopen(outfile.c_str(), "w")) == nullptr)
                 error("open() file " + outfile + " failed");
 
             outfile = filename + std::string(".bwt");
@@ -82,8 +78,7 @@ public:
     void close() {
         // Close output files
         if (write_arrays) {
-            fclose(ssa_file);
-            fclose(esa_file);
+            fclose(sa_file);
             fclose(bwt_file);
             fclose(lcp_file);
         }
@@ -153,8 +148,9 @@ public:
                         print_lcp(lcp_suffix, j);
                     update_ssa(curr, *curr_occ.first);
                     if (write_arrays) {
+                        print_sa();
                         update_bwt(curr_occ.second.second, 1);
-                        update_esa(curr, *curr_occ.first);
+                        // update_esa(curr, *curr_occ.first);
                     }
                     // Start of MUM computation code
                     uint8_t curr_bwt_ch = curr_occ.second.second;
@@ -215,8 +211,8 @@ private:
 
     FILE *bwt_file;
 
-    FILE *ssa_file;
-    FILE *esa_file;
+    FILE *sa_file;
+    // FILE *esa_file;
 
     inline bool inc(phrase_suffix_t& s)
     {
@@ -314,21 +310,22 @@ private:
     {
         if (j < (pf.n - pf.w + 1ULL))
         {
+            // std::cout << ssa << std::endl;
             size_t pos = j;
-            if (fwrite(&pos, SSABYTES, 1, ssa_file) != 1)
-                error("SA write error 1");
-            if (fwrite(&ssa, SSABYTES, 1, ssa_file) != 1)
-                error("SA write error 2");
+            // if (fwrite(&pos, SSABYTES, 1, sa_file) != 1)
+            //     error("SA write error 1");
+            if (fwrite(&ssa, SSABYTES, 1, sa_file) != 1)
+                error("SA write error");
         }
 
-        if (j > 0)
-        {
-            size_t pos = j - 1;
-            if (fwrite(&pos, SSABYTES, 1, esa_file) != 1)
-                error("SA write error 1");
-            if (fwrite(&esa, SSABYTES, 1, esa_file) != 1)
-                error("SA write error 2");
-        }
+        // if (j > 0)
+        // {
+        //     size_t pos = j - 1;
+        //     if (fwrite(&pos, SSABYTES, 1, esa_file) != 1)
+        //         error("SA write error 1");
+        //     if (fwrite(&esa, SSABYTES, 1, esa_file) != 1)
+        //         error("SA write error 2");
+        // }
     }
 
     inline void print_bwt()
@@ -344,7 +341,6 @@ private:
     {
         if (head != next_char)
         {
-            print_sa();
             print_bwt();
 
             head = next_char;

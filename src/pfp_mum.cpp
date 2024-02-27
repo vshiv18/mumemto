@@ -24,6 +24,7 @@
 #include <mum_finder.hpp>
 #include <getopt.h>
 #include <queue>
+#include <read_arrays.hpp>
 
 int build_main(int argc, char** argv, bool mum_mode) {
     /* main method for finding matches */
@@ -64,6 +65,40 @@ int build_main(int argc, char** argv, bool mum_mode) {
     }
     helper_bins.build_paths((path / "bin/").string());
     helper_bins.validate();
+
+    if (build_opts.missing_genomes >= ref_build.num_docs - 1)
+    {
+        std::string match_type = mum_mode ? "MUMs" : "MEMs";
+        std::string message = "Too few number of sequences, defaulting to multi-" + match_type + " in 2 or more sequences";
+        FORCE_LOG("build_main", message.c_str());
+        build_opts.missing_genomes = ref_build.num_docs - 2;
+    }
+
+    // just read from files if provided
+    if (build_opts.arrays_in) {
+        file_lcp input_lcp(build_opts.output_prefix, &ref_build);
+        start = std::chrono::system_clock::now();
+        if (mum_mode){
+            STATUS_LOG("build_main", "finding multi-MUMs from pfp");
+            mum_finder match_finder(build_opts.output_prefix, &ref_build, build_opts.min_match_len, build_opts.missing_genomes + 1, build_opts.overlap);
+            input_lcp.process(match_finder);
+            match_finder.close();
+        }
+        else {
+            STATUS_LOG("build_main", "finding multi-MEMs from pfp");
+            mem_finder match_finder(build_opts.output_prefix, &ref_build, build_opts.min_match_len, ref_build.num_docs - build_opts.missing_genomes, build_opts.max_mem_freq);
+            input_lcp.process(match_finder);
+            match_finder.close();
+        }
+
+        input_lcp.close();
+
+        DONE_LOG((std::chrono::system_clock::now() - start));
+
+        FORCE_LOG("build_main", "finished computing matches");
+        return 0;
+    }
+
     if (!build_opts.from_parse){
         // Parse the input text with BigBWT, and load it into pf object
         STATUS_LOG("build_main", "generating the prefix-free parse for given reference");
@@ -81,14 +116,6 @@ int build_main(int argc, char** argv, bool mum_mode) {
     std::cerr << "\n";
 
     // Builds the BWT, SA, LCP, and MUMs and writes to a file
-
-    if (build_opts.missing_genomes >= ref_build.num_docs - 1)
-    {
-        std::string match_type = mum_mode ? "MUMs" : "MEMs";
-        std::string message = "Too few number of sequences, defaulting to multi-" + match_type + " in 2 or more sequences";
-        FORCE_LOG("build_main", message.c_str());
-        build_opts.missing_genomes = ref_build.num_docs - 2;
-    }
     
     start = std::chrono::system_clock::now();
 
@@ -238,7 +265,10 @@ void print_build_status_info(BuildOptions* opts, bool mum_mode) {
     }
     std::string match_type = mum_mode ? "MUM" : "MEM";
     std::fprintf(stderr, "\tOutput ref path: %s\n", opts->output_ref.data());
-    std::fprintf(stderr, "\tPFP window size: %d\n", opts->pfp_w);
+    if (opts->arrays_in)
+        std::fprintf(stderr, "\tUsing pre-computed LCP/BWT/SA arrays from files with prefix: %s\n", opts->output_prefix.data());
+    else 
+        std::fprintf(stderr, "\tPFP window size: %d\n", opts->pfp_w);
     if (opts->arrays_out) {std::fprintf(stderr, "\tWriting LCP, BWT and run-sampled suffix arrays\n");}
     std::fprintf(stderr, "\tMinimum %s length: %d\n", match_type.data(), opts->min_match_len);
     std::fprintf(stderr, "\tInclude reverse complement?: %d\n", opts->use_rcomp);
@@ -286,12 +316,13 @@ void parse_build_options(int argc, char** argv, BuildOptions* opts) {
         {"min-match-len",   optional_argument, NULL,  'l'},
         {"max-freq",   optional_argument, NULL,  'F'},
         {"arrays-out",   no_argument, NULL,  'a'},
+        {"arrays-in",   no_argument, NULL,  'A'},
         {"keep-temp-files",   no_argument, NULL,  'K'},
         {0, 0, 0,  0}
     };
     int c = 0;
     int long_index = 0;
-    while ((c = getopt_long(argc, argv, "hi:f:o:w:sl:raKk:p:m:", long_options, &long_index)) >= 0) {
+    while ((c = getopt_long(argc, argv, "hi:F:o:w:sl:raAKk:p:m:", long_options, &long_index)) >= 0) {
         switch(c) {
             case 'h': mumemto_build_usage(); std::exit(1);
             case 'i': opts->input_list.assign(optarg); break;
@@ -305,6 +336,7 @@ void parse_build_options(int argc, char** argv, BuildOptions* opts) {
             case 'l': opts->min_match_len = std::atoi(optarg); break;
             case 'F': opts->max_mem_freq = std::atoi(optarg); break;
             case 'a': opts->arrays_out = true; break;
+            case 'A': opts->arrays_in = true; break;
             case 'K': opts->keep_temp = true; break;
             default: mumemto_build_usage(); std::exit(1);
         }
@@ -328,6 +360,7 @@ int mumemto_build_usage() {
     std::fprintf(stderr, "\t%-28sinclude the reverse-complement of sequence (default: false)\n\n", "-r, --revcomp");
     std::fprintf(stderr, "\t%-28sminimum MUM or MEM length (default: 20)\n\n", "-l, --min-match-len");
     std::fprintf(stderr, "\t%-28swrite LCP, BWT, and SA (run-sampled) to file\n\n", "-a, --arrays-out");
+    std::fprintf(stderr, "\t%-28scompute matches from precomputed LCP, BWT, SA\n\n", "-A, --arrays-in");
 
     std::fprintf(stderr, "\t%-28sfind multi-MUMs or multi-MEMs in at least N - k genomes\n\t%-28s(default: 0, match must occur in all sequences, i.e. strict multi-MUM/MEM)\n\n", "-k, --missing-genomes","");
     std::fprintf(stderr, "MUM mode options:\n");
