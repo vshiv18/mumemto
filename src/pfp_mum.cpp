@@ -284,7 +284,7 @@ void parse_build_options(int argc, char** argv, BuildOptions* opts) {
         {"modulus", required_argument, NULL, 'm'},
         {"from-parse",   no_argument, NULL,  's'},
         {"min-match-len",   optional_argument, NULL,  'l'},
-        {"max-freq",   optional_argument, NULL,  'f'},
+        {"max-freq",   optional_argument, NULL,  'F'},
         {"arrays-out",   no_argument, NULL,  'a'},
         {"keep-temp-files",   no_argument, NULL,  'K'},
         {0, 0, 0,  0}
@@ -303,7 +303,7 @@ void parse_build_options(int argc, char** argv, BuildOptions* opts) {
             case 'm': opts->hash_mod = std::atoi(optarg); break;
             case 's': opts->from_parse = true; break;
             case 'l': opts->min_match_len = std::atoi(optarg); break;
-            case 'f': opts->max_mem_freq = std::atoi(optarg); break;
+            case 'F': opts->max_mem_freq = std::atoi(optarg); break;
             case 'a': opts->arrays_out = true; break;
             case 'K': opts->keep_temp = true; break;
             default: mumemto_build_usage(); std::exit(1);
@@ -334,7 +334,7 @@ int mumemto_build_usage() {
     std::fprintf(stderr, "\t%-28soutput subset multi-MUMs that overlap shorter, more complete multi-MUMs (default: true w/ -k)\n", "-p, --no-overlap");
     
     std::fprintf(stderr, "MEM mode options:\n");
-    std::fprintf(stderr, "\t%-28smaximum number of occurences of MEM, beyond N \n\t%-28s(default: -1, no upper limit. Note: -k 0 -f 0 will result in strict multi-MUMs)\n", "-f, --max-freq", "");
+    std::fprintf(stderr, "\t%-28smaximum number of occurences of MEM, beyond N \n\t%-28s(default: -1, no upper limit. Note: -k 0 -F 0 will result in strict multi-MUMs)\n", "-F, --max-freq", "");
 
     std::fprintf(stderr, "PFP options:\n");
     std::fprintf(stderr, "\t%-18s%-10swindow size used for pfp (default: 10)\n", "-w, --window", "[INT]");
