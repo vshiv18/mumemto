@@ -199,8 +199,8 @@ private:
         size_t curdoc;
         char curstrand;
 
-        size_t min_offset = -1;
-        char min_offset_strand;
+        // size_t min_offset = -1;
+        // char min_offset_strand;
 
         for (size_t i = start; i < end; i++)
         {
@@ -213,10 +213,10 @@ private:
             else
                 curstrand = '+';
             
-            if (revcomp && sa_buffer.at(i - buffer_start) < min_offset) {
-                min_offset = sa_buffer.at(i - buffer_start);
-                min_offset_strand = curstrand;
-            }
+            // if (revcomp && sa_buffer.at(i - buffer_start) < min_offset) {
+            //     min_offset = sa_buffer.at(i - buffer_start);
+            //     min_offset_strand = curstrand;
+            // }
 
             pos += std::to_string(curpos) + ",";
             docs += std::to_string(curdoc) + ",";
@@ -235,11 +235,11 @@ private:
         docs += std::to_string(curdoc);
         strand += curstrand;
 
-        if (revcomp && sa_buffer.at(end - buffer_start) < min_offset) {
-            min_offset = sa_buffer.at(end - buffer_start);
-            min_offset_strand = curstrand;
-        }
-        if (min_offset_strand == '+')
+        // if (revcomp && sa_buffer.at(end - buffer_start) < min_offset) {
+        //     min_offset = sa_buffer.at(end - buffer_start);
+        //     min_offset_strand = curstrand;
+        // }
+        // if (min_offset_strand == '+')
             mem_file << std::to_string(length) << '\t' << pos << '\t' << docs << '\t' << strand << std::endl;
     }
 };
