@@ -79,7 +79,10 @@ public:
 
     // main update function, takes in the current streamed value of each array and write mem if found
     inline void update(size_t j, uint8_t bwt_c, size_t doc, size_t sa_entry, size_t lcp)
-    {
+    {   
+        // bwt last change checker
+        if (bwt_buffer.size() == 0 || bwt_buffer.back() != bwt_c)
+            last_bwt_change = j;
         update_mems(j, lcp);
         update_buffers(j, bwt_c, sa_entry, lcp, doc);
     }
@@ -90,6 +93,9 @@ private:
 
     // Helper functions and variables to compute MEMs
     
+    // Speed up checking BWT property by storing the last change position
+    size_t last_bwt_change = 0;
+
     size_t buffer_start = 0;
     std::deque<size_t> sa_buffer;
     std::deque<uint8_t> bwt_buffer;
@@ -121,17 +127,18 @@ private:
 
     inline bool check_bwt_range(size_t start, size_t end) 
     {
-        size_t iterations = end - start;
-        size_t idx = 0;
-        std::deque<uint8_t>::iterator it = bwt_buffer.begin() + (start - buffer_start);
-        uint8_t cur_char = *it;
-        while (idx < iterations) {
-            it++;
-            if (*it != cur_char)
-                return false;
-            idx++;
-        }
-        return true;
+        return last_bwt_change <= start;
+        // size_t iterations = end - start;
+        // size_t idx = 0;
+        // std::deque<uint8_t>::iterator it = bwt_buffer.begin() + (start - buffer_start);
+        // uint8_t cur_char = *it;
+        // while (idx < iterations) {
+        //     it++;
+        //     if (*it != cur_char)
+        //         return false;
+        //     idx++;
+        // }
+        // return true;
     }
 
     inline bool check_doc_range(size_t start, size_t end) 
@@ -181,8 +188,6 @@ private:
         std::string pos = "";
         std::string strand = "";
         std::string docs = "";
-
-        // completely arbitrary, but just write out the pair if the frequency i
         
         size_t curpos;
         size_t curdoc;
