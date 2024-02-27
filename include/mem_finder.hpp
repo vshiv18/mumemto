@@ -81,9 +81,9 @@ public:
     inline void update(size_t j, uint8_t bwt_c, size_t doc, size_t sa_entry, size_t lcp)
     {   
         // bwt last change checker
+        update_mems(j, lcp);
         if (bwt_buffer.size() == 0 || bwt_buffer.back() != bwt_c)
             last_bwt_change = j;
-        update_mems(j, lcp);
         update_buffers(j, bwt_c, sa_entry, lcp, doc);
     }
 
@@ -127,6 +127,7 @@ private:
 
     inline bool check_bwt_range(size_t start, size_t end) 
     {
+        // std::cout << last_bwt_change <<", " << start << ", " << end << std::endl;
         return last_bwt_change <= start;
         // size_t iterations = end - start;
         // size_t idx = 0;
@@ -135,9 +136,13 @@ private:
         // while (idx < iterations) {
         //     it++;
         //     if (*it != cur_char)
+        //     {
+        //         std::cout <<"good range: "<< last_bwt_change <<", " << start << ", " << end << std::endl;
         //         return false;
+        //     }
         //     idx++;
         // }
+        // std::cout <<"bad range: "<< last_bwt_change <<", " << start << ", " << end << std::endl;
         // return true;
     }
 
