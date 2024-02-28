@@ -66,6 +66,7 @@ public:
         
         this->MAX_FREQ = num_docs + max_freq;
         this->no_max_freq = max_freq == -1;
+        //std::numeric_limits<size_t>::max()
 
         // Opening output file
         std::string outfile = filename + std::string(".mems");
@@ -137,12 +138,12 @@ private:
         //     it++;
         //     if (*it != cur_char)
         //     {
-        //         std::cout <<"good range: "<< last_bwt_change <<", " << start << ", " << end << std::endl;
+        //         // std::cout <<"good range: "<< last_bwt_change <<", " << start << ", " << end << std::endl;
         //         return false;
         //     }
         //     idx++;
         // }
-        // std::cout <<"bad range: "<< last_bwt_change <<", " << start << ", " << end << std::endl;
+        // // std::cout <<"bad range: "<< last_bwt_change <<", " << start << ", " << end << std::endl;
         // return true;
     }
 
