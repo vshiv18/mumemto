@@ -66,6 +66,7 @@ public:
         
         this->MAX_FREQ = num_docs + max_freq;
         this->no_max_freq = max_freq == -1;
+        //std::numeric_limits<size_t>::max()
 
         // Opening output file
         std::string outfile = filename + std::string(".mems");
@@ -112,7 +113,6 @@ private:
         while (lcp < current_mems.back().second) {
             interval = current_mems.back();
             current_mems.pop_back();
-            std::cout << interval.second << ", " << j - interval.first << ", " << !check_bwt_range(interval.first, j-1) << ", " << check_doc_range(interval.first, j-1) << std::endl;
             if (interval.second >= MIN_MEM_LENGTH && 
                 j - interval.first >= NUM_DISTINCT && 
                 (no_max_freq || j - interval.first <= MAX_FREQ) &&

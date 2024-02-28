@@ -118,7 +118,7 @@ int build_main(int argc, char** argv, bool mum_mode) {
     // Builds the BWT, SA, LCP, and MUMs and writes to a file
     
     start = std::chrono::system_clock::now();
-
+    
     pfp_lcp lcp(pf, build_opts.output_prefix, &ref_build, build_opts.arrays_out);
     if (mum_mode){
         STATUS_LOG("build_main", "finding multi-MUMs from pfp");
