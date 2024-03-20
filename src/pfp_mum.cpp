@@ -90,7 +90,7 @@ int build_main(int argc, char** argv, bool mum_mode) {
         file_lcp input_lcp(build_opts.output_prefix, &ref_build);
         start = std::chrono::system_clock::now();
         if (mum_mode){
-            STATUS_LOG("build_main", "finding multi-MUMs from pfp");
+            STATUS_LOG("build_main", "finding multi-MUMs from pfp\n");
             mum_finder match_finder(build_opts.output_prefix, &ref_build, build_opts.min_match_len, build_opts.missing_genomes + 1, build_opts.overlap);
             input_lcp.process(match_finder);
             match_finder.close();
@@ -104,6 +104,10 @@ int build_main(int argc, char** argv, bool mum_mode) {
 
         input_lcp.close();
 
+        if (mum_mode)
+            FORCE_LOG("build_main", "finding multi-MUMs from pfp");
+        else
+            FORCE_LOG("build_main", "finding multi-MEMs from pfp");
         DONE_LOG((std::chrono::system_clock::now() - start));
 
         FORCE_LOG("build_main", "finished computing matches");
@@ -146,7 +150,7 @@ int build_main(int argc, char** argv, bool mum_mode) {
 
     lcp.close();
 
-    DONE_LOG((std::chrono::system_clock::now() - start));
+    auto sec = std::chrono::duration<double>((std::chrono::system_clock::now() - start)); std::fprintf(stderr, " done.  (%.3f sec)\n", sec.count());
 
     FORCE_LOG("build_main", "finished computing matches");
 

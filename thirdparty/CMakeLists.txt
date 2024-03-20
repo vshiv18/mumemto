@@ -73,6 +73,17 @@ if(NOT gsacak_POPULATED)
   # add_subdirectory(${gsacak_SOURCE_DIR} ${gsacak_BINARY_DIR} EXCLUDE_FROM_ALL)
 endif()
 
+## Add matplot++
+#FetchContent_Declare(
+#  matplotplusplus
+#  GIT_REPOSITORY https://github.com/alandefreitas/matplotplusplus
+#  )
+
+#FetchContent_GetProperties(matplotplusplus)
+#if(NOT matplotplusplus_POPULATED)
+#    FetchContent_Populate(matplotplusplus)
+#    add_subdirectory(${matplotplusplus_SOURCE_DIR} ${matplotplusplus_BINARY_DIR} EXCLUDE_FROM_ALL)
+#endif()
 
 ## Google benchmark
 # FetchContent_Declare(
