@@ -10,11 +10,12 @@ def parse_arguments():
     parser.add_argument('--lengths','-l', dest='lens', help='lengths file, first column is seq length in order of filelist', required=True)
     parser.add_argument('--len-filter','-L', dest='lenfilter', help='only plot MUMs longer than threshold', default=0, type=int)
     parser.add_argument('--subsample','-s', dest='subsample', help='subsample every Nth mum', default=1, type=int)
-    parser.add_argument('--center','-c', dest='center', action='store_true', help='center plot')
+    parser.add_argument('--center','-c', dest='center', action='store_true', help='center plot', default=False)
     parser.add_argument('--fout','-o', dest='filename', help='plot fname', default='mums')
     
     # parser.add_argument('--parsnp-path', dest='parsnp_path', help='parsnp exec path', default='~/software/parsnp_msa/parsnp')
     args = parser.parse_args()
+    print(args.lens)
     return args
 
 def draw_synteny(genome_lengths, mums, lenfilter=0, dpi=500, size=None, genomes=None, filename=None):
@@ -29,7 +30,7 @@ def draw_synteny(genome_lengths, mums, lenfilter=0, dpi=500, size=None, genomes=
     for (l, starts, strands) in mums:
         if l < lenfilter:
             continue
-        points = [((centering[idx] + x, idx), (centering[idx] + x + l, idx)) if strand == '+' else ((centering[idx] + x, idx), (centering[idx] + x - l, idx)) for idx, (x, strand) in enumerate(zip(starts, strands))]
+        points = [((centering[idx] + x, idx), (centering[idx] + x + l, idx)) if strand == '+' else ((centering[idx] + genome_lengths[idx] - x - l, idx), (centering[idx] + genome_lengths[idx] - x, idx)) for idx, (x, strand) in enumerate(zip(starts, strands))]
         starts, ends = tuple(zip(*points))
         points = starts + ends[::-1]
         polygons.append(points)
@@ -41,7 +42,7 @@ def draw_synteny(genome_lengths, mums, lenfilter=0, dpi=500, size=None, genomes=
     fig.set_tight_layout(True)
     ax.set_ylabel('genomes')
     fig.set_dpi(dpi)
-    ax.axis('off')
+    # ax.axis('off')
     if size:
         fig.set_size_inches(*size)
     else:

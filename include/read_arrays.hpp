@@ -33,6 +33,20 @@
 
 #include <ref_builder.hpp>
 
+// Adapted from https://stackoverflow.com/questions/14539867/how-to-display-a-progress-indicator-in-pure-c-c-cout-printf
+#define PBSTR "============================================================"
+#define PBWIDTH 60
+
+void printProgress(double percentage) {
+    int val = (int) (percentage * 100);
+    int lpad = (int) (percentage * PBWIDTH);
+    int rpad = PBWIDTH - lpad;
+    if (val == 0) {std::fprintf(stderr, "\n\033[33m%3d%%\033[m [%.*s%*s]", val, lpad, PBSTR, rpad, ""); std::fflush(stderr);}
+    else if (val == 100) {std::fprintf(stderr, "\r\033[33m%3d%%\033[m [%.*s%*s]", val, lpad, PBSTR, rpad, "");}
+    else {std::fprintf(stderr, "\r\033[33m%3d%%\033[m [%.*s>%*s]", val, lpad, PBSTR, rpad-1, ""); std::fflush(stderr);}
+    
+}
+
 class file_lcp{
 public:
     RefBuilder* ref_build;
@@ -73,6 +87,8 @@ public:
     void process(T &match_finder) {
         for (auto j = 0; j < ref_build->total_length; j++)
         {    
+            if (j % (ref_build->total_length / PBWIDTH) == 0)
+                        printProgress((double) j / ref_build->total_length);
             // Start of MUM computation code
             uint8_t bwt_i = get_BWT_offset();
             size_t sa_i = get_SA_offset();
