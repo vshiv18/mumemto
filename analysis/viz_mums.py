@@ -12,6 +12,7 @@ def parse_arguments():
     parser.add_argument('--subsample','-s', dest='subsample', help='subsample every Nth mum', default=1, type=int)
     parser.add_argument('--center','-c', dest='center', action='store_true', help='center plot', default=False)
     parser.add_argument('--fout','-o', dest='filename', help='plot fname', default='mums')
+    parser.add_argument('--dpi','-d', dest='dpi', help='dpi', default=500, type=int)
     
     # parser.add_argument('--parsnp-path', dest='parsnp_path', help='parsnp exec path', default='~/software/parsnp_msa/parsnp')
     args = parser.parse_args()
@@ -22,10 +23,9 @@ def draw_synteny(genome_lengths, mums, lenfilter=0, dpi=500, size=None, genomes=
     fig, ax = plt.subplots()
     max_length = max(genome_lengths)
     centering = [0] * len(genome_lengths)
-    for idx, g in enumerate(genome_lengths):
-        if args.center:
-            centering[idx] = (max_length - g) / 2
-        ax.plot([centering[idx] + 0, centering[idx] + g], [idx, idx], color='gray', alpha=0.2, linewidth=0.5)
+    if args.center:
+        centering = [(max_length - g) / 2 for g in genome_lengths]
+        # ax.plot([centering[idx] + 0, centering[idx] + g], [idx, idx], color='gray', alpha=0.2, linewidth=0.5)
     polygons = []
     for (l, starts, strands) in mums:
         if l < lenfilter:
@@ -36,9 +36,13 @@ def draw_synteny(genome_lengths, mums, lenfilter=0, dpi=500, size=None, genomes=
         polygons.append(points)
     ax.add_collection(PolyCollection(polygons, linewidths=0))
     ax.yaxis.set_ticks(range(len(genome_lengths)))
+    ax.tick_params(axis='y', which='both',length=0)
     if genomes:
         ax.set_yticklabels(genomes)
+    else:
+        ax.yaxis.set_ticklabels([])
     ax.set_xlabel('bp')
+    
     fig.set_tight_layout(True)
     ax.set_ylabel('genomes')
     fig.set_dpi(dpi)
@@ -46,7 +50,7 @@ def draw_synteny(genome_lengths, mums, lenfilter=0, dpi=500, size=None, genomes=
     if size:
         fig.set_size_inches(*size)
     else:
-        fig.set_size_inches((6.4, len(genome_lengths) // 5))
+        fig.set_size_inches((6.4, len(genome_lengths) // 20))
     if filename:
         fig.savefig(os.path.join(os.path.dirname(args.mumfile), filename + ('' if filename.endswith('.png') else '.png')))
     return ax

@@ -54,12 +54,14 @@ int build_main(int argc, char** argv, bool mum_mode) {
                     "please reduce to a max of 65,535 docs.", ref_build.num_docs);
 
     if (1) {
+        int includes_rc = build_opts.use_rcomp ? 2 : 1;
         for (auto i = 0; i < build_opts.files.size(); i++){
             std::string lengths_fname = build_opts.output_prefix + ".lengths";
             std::ofstream outfile(lengths_fname);
-            for (size_t i = 0; i < build_opts.files.size(); ++i) {
-                outfile << build_opts.files[i] << " " << ref_build.seq_lengths[i] << std::endl;
+            for (size_t i = 0; i < build_opts.files.size() - 1; ++i) {
+                outfile << build_opts.files[i] << " " << ref_build.seq_lengths[i] / includes_rc << std::endl;
             }
+            outfile << build_opts.files[build_opts.files.size() - 1] << " " << (ref_build.seq_lengths[build_opts.files.size() - 1] - 1) / includes_rc << std::endl;
             outfile.close();
         }  
     }

@@ -27,6 +27,7 @@
 
 #include <common.hpp>
 #include <ref_builder.hpp>
+#include <unordered_set>
 
 #include <deque>
 
@@ -120,6 +121,7 @@ private:
                 write_mem(interval.second, interval.first, j - 1);
             start = interval.first;
         }
+
         if (lcp > current_mems.back().second) {
             if (lcp >= MIN_MEM_LENGTH)
                 current_mems.push_back(std::make_pair(start, lcp));
@@ -149,7 +151,8 @@ private:
 
     inline bool check_doc_range(size_t start, size_t end) 
     {
-        std::unordered_map<size_t, bool> seen;
+        
+        std::unordered_set<size_t> seen;
         size_t unique = 0;
         size_t iterations = end - start + 1;
         size_t idx = 0;
@@ -158,7 +161,7 @@ private:
         while (idx < iterations) {
             if (!seen.count(*it)) {
                 unique++;
-                seen.insert(std::make_pair(*it, 0));
+                seen.insert(*it);
                 if (unique >= NUM_DISTINCT)
                     return true;
             }

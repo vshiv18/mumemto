@@ -33,20 +33,6 @@
 
 #include <ref_builder.hpp>
 
-// Adapted from https://stackoverflow.com/questions/14539867/how-to-display-a-progress-indicator-in-pure-c-c-cout-printf
-#define PBSTR "============================================================"
-#define PBWIDTH 60
-
-void printProgress(double percentage) {
-    int val = (int) (percentage * 100);
-    int lpad = (int) (percentage * PBWIDTH);
-    int rpad = PBWIDTH - lpad;
-    if (val == 0) {std::fprintf(stderr, "\n\033[33m%3d%%\033[m [%.*s%*s]", val, lpad, PBSTR, rpad, ""); std::fflush(stderr);}
-    else if (val == 100) {std::fprintf(stderr, "\r\033[33m%3d%%\033[m [%.*s%*s]", val, lpad, PBSTR, rpad, "");}
-    else {std::fprintf(stderr, "\r\033[33m%3d%%\033[m [%.*s>%*s]", val, lpad, PBSTR, rpad-1, ""); std::fflush(stderr);}
-    
-}
-
 class file_lcp{
 public:
     RefBuilder* ref_build;

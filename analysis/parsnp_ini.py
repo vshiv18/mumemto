@@ -67,7 +67,7 @@ def main(args):
 
     outfile = open(os.path.join(args.wkdir, 'parsnp_formatted.mums'), 'w')
     ### reformat mums
-    for l in tqdm(open(args.mums, 'r').readlines()):
+    for l in open(args.mums, 'r').readlines():
         l = l.strip().split()
         l = (int(l[0]), tuple([int(v) for v in l[1].split(',')]), tuple(l[2].split(',')))
         l = mum_lcp_to_parsnp(l, all_lens)
@@ -78,8 +78,8 @@ def main(args):
 
     inilines = "\n".join(['file{0}={1}\nreverse{0}=0'.format(x + 1, f) for x, f in enumerate(files)])
 
-    # with open(os.path.join(args.wkdir, 'parsnpAligner.ini'), 'w') as out:
-    #     out.write(inifile.format(ref, inilines, 'parsnp_formatted.mums', args.wkdir))
+    with open(os.path.join(args.wkdir, 'parsnpAligner.ini'), 'w') as out:
+        out.write(inifile.format(ref, inilines, 'parsnp_formatted.mums', args.wkdir))
     
     command = '/usr/bin/time -v {0} -r {1} -d {2} -c -o {3} -v -p {4} -i {3}/parsnpAligner.ini --skip-phylogeny'.format(args.parsnp_path, ref, ' '.join(files), args.wkdir, args.threads)
     print('Running:', command)
