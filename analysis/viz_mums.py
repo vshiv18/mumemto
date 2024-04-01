@@ -14,9 +14,7 @@ def parse_arguments():
     parser.add_argument('--fout','-o', dest='filename', help='plot fname', default='mums')
     parser.add_argument('--dpi','-d', dest='dpi', help='dpi', default=500, type=int)
     
-    # parser.add_argument('--parsnp-path', dest='parsnp_path', help='parsnp exec path', default='~/software/parsnp_msa/parsnp')
     args = parser.parse_args()
-    print(args.lens)
     return args
 
 def draw_synteny(genome_lengths, mums, lenfilter=0, dpi=500, size=None, genomes=None, filename=None):
@@ -37,29 +35,30 @@ def draw_synteny(genome_lengths, mums, lenfilter=0, dpi=500, size=None, genomes=
     ax.add_collection(PolyCollection(polygons, linewidths=0))
     ax.yaxis.set_ticks(range(len(genome_lengths)))
     ax.tick_params(axis='y', which='both',length=0)
-    if genomes:
-        ax.set_yticklabels(genomes)
-    else:
-        ax.yaxis.set_ticklabels([])
+    # if genomes:
+    #     ax.set_yticklabels(genomes)
+    # else:
+    ax.yaxis.set_ticklabels([])
     ax.set_xlabel('bp')
-    
-    fig.set_tight_layout(True)
     ax.set_ylabel('genomes')
     fig.set_dpi(dpi)
+    ax.set_ylim(0, len(genome_lengths))
+    ax.set_xlim(0, max_length)
+    fig.set_tight_layout(True)
     # ax.axis('off')
     if size:
         fig.set_size_inches(*size)
     else:
         fig.set_size_inches((6.4, len(genome_lengths) // 20))
     if filename:
-        fig.savefig(os.path.join(os.path.dirname(args.mumfile), filename + ('' if filename.endswith('.png') else '.png')))
+        fig.savefig(os.path.join(os.path.dirname(args.mumfile), filename + ('' if filename.endswith('.png') else '.png')), dpi=dpi)
     return ax
 
 def main(args):
     seq_lengths = [int(l.split()[1]) for l in open(args.lens, 'r').read().splitlines()]
     genome_names = [os.path.splitext(os.path.basename(l.split()[0]))[0] for l in open(args.filelist, 'r').read().splitlines()]
     mums = parse_mums(args)
-    draw_synteny(seq_lengths, mums, lenfilter=args.lenfilter, genomes=genome_names, filename=args.filename)
+    draw_synteny(seq_lengths, mums, lenfilter=args.lenfilter, genomes=genome_names, filename=args.filename, dpi=args.dpi)
 
 def parse_mums(args):
     count = 0

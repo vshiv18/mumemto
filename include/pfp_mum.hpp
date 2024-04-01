@@ -127,4 +127,31 @@ void parse_build_options(int argc, char** argv, BuildOptions* opts);
 void print_build_status_info(BuildOptions* opts, bool mum_mode);
 void run_build_parse_cmd(BuildOptions* build_opts, HelperPrograms* helper_bins);
 
+const std::string SKULL =
+"                            ,--.   \n"
+"                           {    }  \n"
+"                           K,   }  \n"
+"                          /  ~Y`   \n"
+"                     ,   /   /     \n"
+"                    {_'-K.__/      \n"
+"                      `/-.__L._    \n"
+"                      /  ' /`\\_}   \n"
+"                     /  ' /        \n"
+"             ____   /  ' /         \n"
+"      ,-'~~~~    ~~/  ' /_         \n"
+"    ,'             ``~~~  ',       \n"
+"   (                        Y      \n"
+"  {                         I      \n"
+" {      -                    `,    \n"
+" |       ',                   )    \n"
+" |        |   ,..__      __. Y     \n"
+" |    .,_./  Y ' / ^Y   J   )|     \n"
+" \\           |' /   |   |   ||    \n"
+"  \\          L_/    . _ (_,.'(     \n"
+"   \\,   ,      ^^""' / |      )    \n"
+"     \\_  \\          /,L]     /     \n"
+"       '-_~-,       ` `   ./`      \n"
+"          `'{_            )       \n"
+"              ^^\\..___,.--`      \n";
+
 #endif /* End of PFP_MUM_H */

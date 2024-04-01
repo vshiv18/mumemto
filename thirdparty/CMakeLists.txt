@@ -127,6 +127,7 @@ if(NOT sdsl_POPULATED)
   set(GENERATE_DOC OFF CACHE BOOL "Do not generate doxygen for sdsl-lite")
   
   add_subdirectory(${sdsl_SOURCE_DIR} ${sdsl_BINARY_DIR} EXCLUDE_FROM_ALL)
+  target_compile_options(sdsl PRIVATE -w)
 endif()
 
 ## Add divsuffsort

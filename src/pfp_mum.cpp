@@ -415,6 +415,12 @@ int main(int argc, char** argv) {
             mum_mode = true;
         else if (std::strcmp(argv[1], "mem") == 0)
             mum_mode = false;
+        else if (std::strcmp(argv[1], "mori") == 0)
+        {
+            std::fprintf(stdout, "\033[1m\033[31m\nDeath is inevitable.\033[m\033[0m\n");
+            std::fprintf(stdout, SKULL.c_str());
+            return 0;
+        }
         else
         {
             std::fprintf(stderr, "\nOne of [mum | mem] mode selection required!\n");
