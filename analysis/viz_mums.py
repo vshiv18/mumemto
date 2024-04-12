@@ -41,7 +41,7 @@ def draw_synteny(genome_lengths, mums, lenfilter=0, dpi=500, size=None, genomes=
     ax.yaxis.set_ticklabels([])
     ax.set_xlabel('bp')
     ax.set_ylabel('genomes')
-    fig.set_dpi(dpi)
+    # fig.set_dpi(dpi)
     ax.set_ylim(0, len(genome_lengths))
     ax.set_xlim(0, max_length)
     fig.set_tight_layout(True)
