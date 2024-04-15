@@ -80,13 +80,14 @@ public:
     }
 
     // main update function, takes in the current streamed value of each array and write mem if found
-    inline void update(size_t j, uint8_t bwt_c, size_t doc, size_t sa_entry, size_t lcp)
+    inline size_t update(size_t j, uint8_t bwt_c, size_t doc, size_t sa_entry, size_t lcp)
     {   
         // bwt last change checker
-        update_mems(j, lcp);
+        size_t count = update_mems(j, lcp);
         if (bwt_buffer.size() == 0 || bwt_buffer.back() != bwt_c)
             last_bwt_change = j;
         update_buffers(j, bwt_c, sa_entry, lcp, doc);
+        return count;
     }
 
 private:    
@@ -105,10 +106,11 @@ private:
 
     std::vector<std::pair<size_t, size_t>> current_mems; // list of pairs, (start idx in SA, length of mem)
 
-    inline void update_mems(size_t j, size_t lcp)
+    inline size_t update_mems(size_t j, size_t lcp)
     {
         // three cases for LCP, increase, decrease, or stagnant (nothing changes)
         // j = idx in SA
+        size_t count = 0;
         size_t start = j - 1;
         std::pair<size_t, size_t> interval;
         while (lcp < current_mems.back().second) {
@@ -117,8 +119,10 @@ private:
             if (interval.second >= MIN_MEM_LENGTH && 
                 j - interval.first >= NUM_DISTINCT && 
                 (no_max_freq || j - interval.first <= MAX_FREQ) &&
-                !check_bwt_range(interval.first, j-1) && check_doc_range(interval.first, j-1))
-                write_mem(interval.second, interval.first, j - 1);
+                !check_bwt_range(interval.first, j-1) && check_doc_range(interval.first, j-1)) {
+                    write_mem(interval.second, interval.first, j - 1);
+                    count++;
+                }
             start = interval.first;
         }
 
@@ -126,6 +130,8 @@ private:
             if (lcp >= MIN_MEM_LENGTH)
                 current_mems.push_back(std::make_pair(start, lcp));
         }
+
+        return count;
     }
 
     inline bool check_bwt_range(size_t start, size_t end) 

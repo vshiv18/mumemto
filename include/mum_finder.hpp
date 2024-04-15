@@ -166,21 +166,23 @@ public:
     }
 
     // main update function, takes in the current streamed value of each array and write mum if found
-    inline void update(size_t j, uint8_t bwt_c, size_t doc, size_t sa_entry, size_t lcp)
+    inline size_t update(size_t j, uint8_t bwt_c, size_t doc, size_t sa_entry, size_t lcp)
     {
         right_lcp = lcp;
-        
+        size_t count = 0;
         bool valid_window = sa_window.size() == num_docs;
         if(valid_window)
         {
             mum_idxs = is_mum();
             if (mum_idxs.size() > 0)
-                write_mum(mum_idxs);
+                count = write_mum(mum_idxs);
         }
+        
         update_lcp_window(right_lcp, valid_window);
         update_sa_window(sa_entry, valid_window);
         update_bwt_window(bwt_c, valid_window);
         update_doc_window(doc, valid_window);
+        return count;
     }
 
 private:    
@@ -308,10 +310,11 @@ private:
     }
 
     // write the mum to file
-    inline void write_mum(std::vector<std::pair<int, int>> const &idxs)
+    inline size_t write_mum(std::vector<std::pair<int, int>> const &idxs)
     {
         std::vector<int> offsets(num_docs);
         std::vector<char> strand(num_docs);
+        size_t count = 0;
         int doc;
         int idx;
         int mum_length;
@@ -357,8 +360,11 @@ private:
             if (offsets[num_docs - 1] == -1) 
                 mum_file << std::endl;
             else
-                mum_file << strand[num_docs - 1] << std::endl;       
+                mum_file << strand[num_docs - 1] << std::endl;
+            
+            count += 1;
         }
+        return count;
     }
 };
 

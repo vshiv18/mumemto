@@ -137,24 +137,31 @@ int build_main(int argc, char** argv, bool mum_mode) {
     start = std::chrono::system_clock::now();
     
     pfp_lcp lcp(pf, build_opts.output_prefix, &ref_build, build_opts.arrays_out);
+    size_t count = 0;
+
     if (mum_mode){
         STATUS_LOG("build_main", "finding multi-MUMs from pfp");
         mum_finder match_finder(build_opts.output_prefix, &ref_build, build_opts.min_match_len, build_opts.missing_genomes + 1, build_opts.overlap);
-        lcp.process(match_finder);
+        count = lcp.process(match_finder);
         match_finder.close();
     }
     else {
         STATUS_LOG("build_main", "finding multi-MEMs from pfp");
         mem_finder match_finder(build_opts.output_prefix, &ref_build, build_opts.min_match_len, ref_build.num_docs - build_opts.missing_genomes, build_opts.max_mem_freq);
-        lcp.process(match_finder);
+        count = lcp.process(match_finder);
         match_finder.close();
     }
 
     lcp.close();
-
+    
     auto sec = std::chrono::duration<double>((std::chrono::system_clock::now() - start)); std::fprintf(stderr, " done.  (%.3f sec)\n", sec.count());
 
-    FORCE_LOG("build_main", "finished computing matches");
+    FORCE_LOG("build_main", "Found %d matches!", count);
+    FORCE_LOG("build_main", "Run stats:");
+    double n_r = static_cast<double>(pf.n) / lcp.num_run;
+    std::cerr << "n/r = " << pf.n << " / " << lcp.num_run << " = " << std::fixed << std::setprecision(3) << std::round(n_r * 1000) / 1000 << std::endl;
+
+    
 
     if (!build_opts.keep_temp)
         remove_temp_files(build_opts.output_ref);
