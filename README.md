@@ -67,3 +67,15 @@ lexicographically based on the match sequence.
 The `*.mems` file contains each MEM as a separate line with the following fields: (1) the match length, (2)
 a comma-delimited list of offsets within a sequence, (3) the corresponding sequence ID for each offset given in (2). The MEMs are sorted in the output file
 lexicographically based on the match sequence.
+
+## Visualization
+
+<img src="img/potato_syn_small.png" alt="potato_synteny"/>
+
+Mumemto can visualize multi-MUMs in a synteny-like format, highlighting conservation and genomic structural diversity within a collection of sequences.
+
+After running `mumemto mum` on a collection of FASTAs, you can generate a visualization using:
+```sh
+/path/to/mumemto_repo/analysis/viz_mums.py (-i PREFIX | -m MUMFILE)
+```
+Use `viz_mums.py -h` to see options for customizability. As of now, only strict and partial multi-MUMs are supported (rare multi-MEM support coming soon).
