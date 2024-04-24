@@ -64,11 +64,14 @@ public:
     RefBuilder* ref_build;
     bool write_arrays;
 
+    size_t num_run;
+
     pfp_lcp(pf_parsing &pfp_, std::string filename, RefBuilder* ref_build, bool write_arrays) : 
                 pf(pfp_),
                 min_s(1, pf.n),
                 pos_s(1,0),
                 head(0),
+                num_run(0),
                 ref_build(ref_build),
                 write_arrays(write_arrays)
     {
@@ -100,10 +103,10 @@ public:
     }
 
     template <class T>
-    void process(T &match_finder) {
+    size_t process(T &match_finder) {
         phrase_suffix_t curr;
         phrase_suffix_t prev;
-
+        size_t count = 0;
         inc(curr);
         while (curr.i < pf.dict.saD.size())
         {
@@ -164,17 +167,17 @@ public:
                         print_lcp(lcp_suffix, j);
                     update_ssa(curr, *curr_occ.first);
                     if (write_arrays) {
-                        print_sa();
-                        update_bwt(curr_occ.second.second, 1);
-                        // update_esa(curr, *curr_occ.first);
+                        print_sa(); 
                     }
+                    update_bwt(curr_occ.second.second, 1);
+
                     // Start of MUM computation code
                     uint8_t curr_bwt_ch = curr_occ.second.second;
                     size_t sa_i = ssa;
                     size_t doc_i = ref_build->doc_ends_rank(ssa);
                     // lcp is in lcp_suffix
 
-                    match_finder.update(j, curr_bwt_ch, doc_i, sa_i, lcp_suffix);
+                    count += match_finder.update(j, curr_bwt_ch, doc_i, sa_i, lcp_suffix);
                     // End of MUM computation code
 
                     
@@ -205,6 +208,7 @@ public:
             print_bwt();
         }
         printProgress(1.0);
+        return count;
     }
 
 
@@ -358,11 +362,14 @@ private:
     {
         if (head != next_char)
         {
-            print_bwt();
+            if (write_arrays)
+                print_bwt();
 
             head = next_char;
 
             length = 0;
+
+            num_run++;
         }
         length += length_;
 

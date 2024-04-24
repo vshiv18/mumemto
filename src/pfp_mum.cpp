@@ -137,24 +137,37 @@ int build_main(int argc, char** argv, bool mum_mode) {
     start = std::chrono::system_clock::now();
     
     pfp_lcp lcp(pf, build_opts.output_prefix, &ref_build, build_opts.arrays_out);
-    if (mum_mode){
+    size_t count = 0;
+
+    if (build_opts.rare_freq > 1){
+        STATUS_LOG("build_main", "finding rare multi-MEMs from pfp");
+        rare_mem_finder match_finder(build_opts.output_prefix, &ref_build, build_opts.min_match_len, ref_build.num_docs - build_opts.missing_genomes, build_opts.rare_freq);
+        count = lcp.process(match_finder);
+        match_finder.close();
+    }
+    else if (mum_mode){
         STATUS_LOG("build_main", "finding multi-MUMs from pfp");
         mum_finder match_finder(build_opts.output_prefix, &ref_build, build_opts.min_match_len, build_opts.missing_genomes + 1, build_opts.overlap);
-        lcp.process(match_finder);
+        count = lcp.process(match_finder);
         match_finder.close();
     }
     else {
         STATUS_LOG("build_main", "finding multi-MEMs from pfp");
         mem_finder match_finder(build_opts.output_prefix, &ref_build, build_opts.min_match_len, ref_build.num_docs - build_opts.missing_genomes, build_opts.max_mem_freq);
-        lcp.process(match_finder);
+        count = lcp.process(match_finder);
         match_finder.close();
     }
 
     lcp.close();
-
+    
     auto sec = std::chrono::duration<double>((std::chrono::system_clock::now() - start)); std::fprintf(stderr, " done.  (%.3f sec)\n", sec.count());
 
-    FORCE_LOG("build_main", "finished computing matches");
+    FORCE_LOG("build_main", "Found %d matches!", count);
+    FORCE_LOG("build_main", "Run stats:");
+    double n_r = static_cast<double>(pf.n) / lcp.num_run;
+    std::cerr << "n/r = " << pf.n << " / " << lcp.num_run << " = " << std::fixed << std::setprecision(3) << std::round(n_r * 1000) / 1000 << std::endl;
+
+    
 
     if (!build_opts.keep_temp)
         remove_temp_files(build_opts.output_ref);
@@ -295,6 +308,8 @@ void print_build_status_info(BuildOptions* opts, bool mum_mode) {
         std::fprintf(stderr, "\tfinding multi-%ss present in N - %d genomes\n", match_type.data(), opts->missing_genomes);
     if (!mum_mode && opts->max_mem_freq >= 0)
         std::fprintf(stderr, "\t\t- excluding multi-MEMs that occur more than N + %d times\n", opts->max_mem_freq);
+    if (!mum_mode && opts->rare_freq > 1)
+        std::fprintf(stderr, "\t\t- only finding rare multi-MEMs, that occur at most %d times in each sequence\n", opts->rare_freq);
     if (opts->overlap && opts->missing_genomes > 0 && mum_mode)
         std::fprintf(stderr, "\t\t- including overlapping multi-MUMs\n");
 }
@@ -326,20 +341,23 @@ void parse_build_options(int argc, char** argv, BuildOptions* opts) {
         {"input",   required_argument, NULL,  'i'},
         {"output",       required_argument, NULL,  'o'},
         {"revcomp",   no_argument, NULL,  'r'},
-        {"missing-genomes",   optional_argument, NULL,  'k'},
+        {"missing-genomes",   required_argument, NULL,  'k'},
         {"no-overlap",   no_argument, NULL,  'p'},
         {"modulus", required_argument, NULL, 'm'},
         {"from-parse",   no_argument, NULL,  's'},
-        {"min-match-len",   optional_argument, NULL,  'l'},
-        {"max-freq",   optional_argument, NULL,  'F'},
+        {"min-match-len",   required_argument, NULL,  'l'},
+        {"max-freq",   required_argument, NULL,  'F'},
         {"arrays-out",   no_argument, NULL,  'A'},
-        {"arrays-in",   optional_argument, NULL,  'a'},
+        {"arrays-in",   required_argument, NULL,  'a'},
         {"keep-temp-files",   no_argument, NULL,  'K'},
+        {"window",   required_argument, NULL,  'w'},
+        {"rare",   required_argument, NULL,  'x'},
         {0, 0, 0,  0}
     };
     int c = 0;
     int long_index = 0;
-    while ((c = getopt_long(argc, argv, "hi:F:o:w:sl:ra:AKk:p:m:", long_options, &long_index)) >= 0) {
+    
+    while ((c = getopt_long(argc, argv, "hi:F:o:w:sl:ra:AKk:p:m:x:", long_options, &long_index)) >= 0) {
         switch(c) {
             case 'h': mumemto_build_usage(); std::exit(1);
             case 'i': opts->input_list.assign(optarg); break;
@@ -355,6 +373,7 @@ void parse_build_options(int argc, char** argv, BuildOptions* opts) {
             case 'A': opts->arrays_out = true; break;
             case 'a': opts->arrays_in.assign(optarg); break;
             case 'K': opts->keep_temp = true; break;
+            case 'x': opts->rare_freq = std::atoi(optarg); break;
             default: mumemto_build_usage(); std::exit(1);
         }
     }
@@ -362,7 +381,6 @@ void parse_build_options(int argc, char** argv, BuildOptions* opts) {
     for (int i = optind; i < argc; ++i) {
         opts->files.push_back(argv[i]);
     }
-
 }
 
 int mumemto_build_usage() {
@@ -385,6 +403,8 @@ int mumemto_build_usage() {
     
     std::fprintf(stderr, "MEM mode options:\n");
     std::fprintf(stderr, "\t%-18s%-10smaximum number of occurences of MEM, beyond N \n\t%-28s(default: -1, no upper limit. Note: -k 0 -F 0 will result in strict multi-MUMs)\n", "-F, --max-freq","[INT]", "");
+    std::fprintf(stderr, "\t%-18s%-10sfind rare multi-MEMs, occuring at most k times in each genome\n", "--rare", "[INT]");
+
 
     std::fprintf(stderr, "PFP options:\n");
     std::fprintf(stderr, "\t%-18s%-10swindow size used for pfp (default: 10)\n", "-w, --window", "[INT]");

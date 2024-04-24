@@ -70,7 +70,8 @@ public:
 
 
     template <class T>
-    void process(T &match_finder) {
+    size_t process(T &match_finder) {
+        size_t count;
         for (auto j = 0; j < ref_build->total_length; j++)
         {    
             if (j % (ref_build->total_length / PBWIDTH) == 0)
@@ -81,9 +82,10 @@ public:
             size_t lcp_i = get_LCP_offset();
             size_t doc_i = ref_build->doc_ends_rank(sa_i);
 
-            match_finder.update(j, bwt_i, doc_i, sa_i, lcp_i);
+            count += match_finder.update(j, bwt_i, doc_i, sa_i, lcp_i);
             // End of MUM computation code
         }
+        return count;
     }
 
 private:

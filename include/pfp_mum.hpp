@@ -71,6 +71,7 @@ struct BuildOptions {
         bool from_parse = false;
         size_t min_match_len = 20;
         int max_mem_freq = -1;
+        int rare_freq = 0;
 
         void validate() {
             /* checks the arguments and make sure they are valid */
@@ -96,6 +97,9 @@ struct BuildOptions {
 
             if (max_mem_freq < -1)
                 FATAL_ERROR("Maximum MEM frequency cannot be negative (-1 indicates no limit on MEM frequency)"); 
+
+            if (rare_freq == 1)
+                FATAL_ERROR("Rare MEM frequency must be > 1. For MEM's that appear exactly once, use MUM mode."); 
         }
 };
 
