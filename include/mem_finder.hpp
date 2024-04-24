@@ -89,9 +89,7 @@ public:
         update_buffers(j, bwt_c, sa_entry, lcp, doc);
         return count;
     }
-
-private:    
-
+protected:
     std::ofstream mem_file;
 
     // Helper functions and variables to compute MEMs
@@ -105,34 +103,6 @@ private:
     std::deque<size_t> da_buffer;
 
     std::vector<std::pair<size_t, size_t>> current_mems; // list of pairs, (start idx in SA, length of mem)
-
-    inline size_t update_mems(size_t j, size_t lcp)
-    {
-        // three cases for LCP, increase, decrease, or stagnant (nothing changes)
-        // j = idx in SA
-        size_t count = 0;
-        size_t start = j - 1;
-        std::pair<size_t, size_t> interval;
-        while (lcp < current_mems.back().second) {
-            interval = current_mems.back();
-            current_mems.pop_back();
-            if (interval.second >= MIN_MEM_LENGTH && 
-                j - interval.first >= NUM_DISTINCT && 
-                (no_max_freq || j - interval.first <= MAX_FREQ) &&
-                !check_bwt_range(interval.first, j-1) && check_doc_range(interval.first, j-1)) {
-                    write_mem(interval.second, interval.first, j - 1);
-                    count++;
-                }
-            start = interval.first;
-        }
-
-        if (lcp > current_mems.back().second) {
-            if (lcp >= MIN_MEM_LENGTH)
-                current_mems.push_back(std::make_pair(start, lcp));
-        }
-
-        return count;
-    }
 
     inline bool check_bwt_range(size_t start, size_t end) 
     {
@@ -153,49 +123,6 @@ private:
         // }
         // // std::cout <<"bad range: "<< last_bwt_change <<", " << start << ", " << end << std::endl;
         // return true;
-    }
-
-    inline bool check_doc_range(size_t start, size_t end) 
-    {
-        
-        std::unordered_set<size_t> seen;
-        size_t unique = 0;
-        size_t iterations = end - start + 1;
-        size_t idx = 0;
-        std::deque<size_t>::iterator it = da_buffer.begin() + (start - buffer_start);
-        uint8_t cur_char = *it;
-        while (idx < iterations) {
-            if (!seen.count(*it)) {
-                unique++;
-                seen.insert(*it);
-                if (unique >= NUM_DISTINCT)
-                    return true;
-            }
-            it++;
-            idx++;
-        }
-        return false;
-    }
-
-    inline void update_buffers(size_t j, uint8_t bwt_c, size_t sa_pos, size_t lcp, size_t docid) {
-        if (current_mems.size() <= 1) { // empty stack, only the null interval. < 1 should never happen, but included nonetheless
-            if (sa_buffer.size() > 0) {
-                sa_buffer.clear();
-                bwt_buffer.clear();
-                da_buffer.clear();
-            }
-            buffer_start = j;
-        }
-        else if (current_mems[1].first > buffer_start) {
-            size_t to_remove = current_mems[1].first - buffer_start;
-            buffer_start = current_mems[1].first;
-            sa_buffer.erase(sa_buffer.begin(), sa_buffer.begin() + to_remove);
-            bwt_buffer.erase(bwt_buffer.begin(), bwt_buffer.begin() + to_remove);
-            da_buffer.erase(da_buffer.begin(), da_buffer.begin() + to_remove);
-        }
-        bwt_buffer.push_back(bwt_c);
-        sa_buffer.push_back(sa_pos);
-        da_buffer.push_back(docid);
     }
 
     inline void write_mem(size_t length, size_t start, size_t end)
@@ -251,6 +178,138 @@ private:
         // if (min_offset_strand == '+')
             mem_file << std::to_string(length) << '\t' << pos << '\t' << docs << '\t' << strand << std::endl;
     }
+
+private:    
+
+    inline size_t update_mems(size_t j, size_t lcp)
+    {
+        // three cases for LCP, increase, decrease, or stagnant (nothing changes)
+        // j = idx in SA
+        size_t count = 0;
+        size_t start = j - 1;
+        std::pair<size_t, size_t> interval;
+        while (lcp < current_mems.back().second) {
+            interval = current_mems.back();
+            current_mems.pop_back();
+            if (interval.second >= MIN_MEM_LENGTH && 
+                j - interval.first >= NUM_DISTINCT && 
+                (no_max_freq || j - interval.first <= MAX_FREQ) &&
+                !check_bwt_range(interval.first, j-1) && check_doc_range(interval.first, j-1)) {
+                    write_mem(interval.second, interval.first, j - 1);
+                    count++;
+                }
+            start = interval.first;
+        }
+
+        if (lcp > current_mems.back().second) {
+            if (lcp >= MIN_MEM_LENGTH)
+                current_mems.push_back(std::make_pair(start, lcp));
+        }
+
+        return count;
+    }
+
+    inline bool check_doc_range(size_t start, size_t end) 
+    {
+        
+        std::unordered_set<size_t> seen;
+        size_t unique = 0;
+        size_t iterations = end - start + 1;
+        size_t idx = 0;
+        std::deque<size_t>::iterator it = da_buffer.begin() + (start - buffer_start);
+        uint8_t cur_char = *it;
+        while (idx < iterations) {
+            if (!seen.count(*it)) {
+                unique++;
+                seen.insert(*it);
+                if (unique >= NUM_DISTINCT)
+                    return true;
+            }
+            it++;
+            idx++;
+        }
+        return false;
+    }
+
+    inline void update_buffers(size_t j, uint8_t bwt_c, size_t sa_pos, size_t lcp, size_t docid) {
+        if (current_mems.size() <= 1) { // empty stack, only the null interval. < 1 should never happen, but included nonetheless
+            if (sa_buffer.size() > 0) {
+                sa_buffer.clear();
+                bwt_buffer.clear();
+                da_buffer.clear();
+            }
+            buffer_start = j;
+        }
+        else if (current_mems[1].first > buffer_start) {
+            size_t to_remove = current_mems[1].first - buffer_start;
+            buffer_start = current_mems[1].first;
+            sa_buffer.erase(sa_buffer.begin(), sa_buffer.begin() + to_remove);
+            bwt_buffer.erase(bwt_buffer.begin(), bwt_buffer.begin() + to_remove);
+            da_buffer.erase(da_buffer.begin(), da_buffer.begin() + to_remove);
+        }
+        bwt_buffer.push_back(bwt_c);
+        sa_buffer.push_back(sa_pos);
+        da_buffer.push_back(docid);
+    }
 };
+
+
+
+class rare_mem_finder : public mem_finder {
+public:
+    rare_mem_finder(std::string filename, RefBuilder* ref_build, size_t min_mem_len, size_t num_distinct, int max_freq)
+        : mem_finder(filename, ref_build, min_mem_len, num_distinct, max_freq) {}
+
+private:
+    inline bool check_doc_range(size_t start, size_t end) {
+        std::unordered_map<size_t, size_t> seen;
+        size_t unique = 0;
+        size_t iterations = end - start + 1;
+        size_t idx = 0;
+        std::deque<size_t>::iterator it = da_buffer.begin() + (start - buffer_start);
+        uint8_t cur_char = *it;
+        while (idx < iterations) {
+            if (!seen.count(*it)) {
+                unique++;
+                seen[*it] = 1;
+                if (unique >= NUM_DISTINCT)
+                    return true;
+            } else {
+                seen[*it]++;
+                if (seen[*it] > MAX_FREQ)
+                    return false;
+            }
+            it++;
+            idx++;
+        }
+        return false;
+    }
+
+    inline size_t update_mems(size_t j, size_t lcp) {
+        size_t count = 0;
+        size_t start = j - 1;
+        std::pair<size_t, size_t> interval;
+        while (lcp < current_mems.back().second) {
+            interval = current_mems.back();
+            current_mems.pop_back();
+            if (interval.second >= MIN_MEM_LENGTH && 
+                j - interval.first >= NUM_DISTINCT && 
+                (no_max_freq || j - interval.first <= (NUM_DISTINCT * MAX_FREQ)) &&
+                !check_bwt_range(interval.first, j-1) && check_doc_range(interval.first, j-1)) {
+                    write_mem(interval.second, interval.first, j - 1);
+                    count++;
+                }
+            start = interval.first;
+        }
+
+        if (lcp > current_mems.back().second) {
+            if (lcp >= MIN_MEM_LENGTH)
+                current_mems.push_back(std::make_pair(start, lcp));
+        }
+
+        return count;
+    }
+};
+
 
 #endif /* end of include guard: _MEM_HH */
