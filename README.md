@@ -56,6 +56,8 @@ Mumemto mode options enable the computation of various different classes of exac
 <img src="img/viz_def.png" alt="visual_guide" width="600" align="center"/>
 </p>
 
+`-k` allows for partial multi-MUM and MEMs (appearing in at least `N-k` sequences) and `--rare k` finds multi-MEMs that appear at most `k` times in each sequences (can be used with `-k` to find rare partial multi-MEMs).
+
 **Format of the \*.mums file:**
 ```sh
 [MUM length] [comma-delimited list of offsets within each sequence, in order of filelist] [comma-delimited strand indicators (one of +/-)]
