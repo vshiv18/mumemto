@@ -18,7 +18,7 @@ docker pull vshiv123/mumemto:latest
 docker run vshiv123/mumemto:latest mumemto -h
 ### if using singularity:
 singularity pull docker://vshiv123/mumemto:latest
-./mumemto_latest.sif mumemto
+./mumemto_latest.sif mumemto -h
 ```
 
 ### Compile from scratch
