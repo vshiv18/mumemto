@@ -50,20 +50,11 @@ mumemto mem -o <output_prefix> [input_fasta [...]]
 
 The command above takes in a list of fasta files as positional arguments and then generates output files using the output prefix. Alternatively, you can provide a file-list, which specifies a list of fastas and which document/class each file belongs in. Passing in fastas as positional arguments will auto-generate a filelist that defines the order of the sequences.
 
-Use the `-h` flag to list the options for each mode:
-```sh
-mumemto mum -h
-```
-
-
-**Example of file-list file:**
-```sh
-/path/to/ecoli_1.fna 1
-/path/to/salmonella_1.fna 2
-/path/to/bacillus_1.fna 3
-/path/to/staph_2.fna 4
-```
-
+Use the `-h` flag to list the options for each mode: `mumemto mum -h`.
+Mumemto mode options enable the computation of various different classes of exact matches:
+<p align="center">
+<img src="img/viz_def.png" alt="visual_guide" width="600" align="center"/>
+</p>
 **Format of the \*.mums file:**
 ```sh
 [MUM length] [comma-delimited list of offsets within each sequence, in order of filelist] [comma-delimited strand indicators (one of +/-)]
@@ -79,6 +70,14 @@ lexicographically based on the match sequence.
 The `*.mems` file contains each MEM as a separate line with the following fields: (1) the match length, (2)
 a comma-delimited list of offsets within a sequence, (3) the corresponding sequence ID for each offset given in (2). The MEMs are sorted in the output file
 lexicographically based on the match sequence.
+
+**Example of file-list file:**
+```sh
+/path/to/ecoli_1.fna 1
+/path/to/salmonella_1.fna 2
+/path/to/bacillus_1.fna 3
+/path/to/staph_2.fna 4
+```
 
 ## Visualization
 <figure>
