@@ -1,6 +1,6 @@
 # **mumemto**: finding multi-MUMs and MEMs in pangenomes
 
-<img src="img/logo.png" alt="logo" width="290" align="left"/>
+<img src="img/logo.png" alt="logo" width="292" align="left"/>
 This code is based on the <a href="https://github.com/maxrossi91/pfp-thresholds">pfp-thresholds</a> repository written by <a href="https://github.com/maxrossi91">Massimiliano Rossi</a> and <a href="https://github.com/oma219/docprofiles">docprofiles</a> repository written by <a href="https://github.com/oma219">Omar Ahmed</a>. 
 
 This tool identifies **maximal unique matches (multi-MUMs)** present across a collection of sequences. Multi-MUMs are defined as maximally matching substrings present in each sequence in a collection *exactly once*. Additionally, this tool can identify **multi-MEMs**, maximal exact matches present across sequences, without the uniqueness property. This method is uses the prefix-free parse (PFP) algorithm for suffix array construction on large, repetitive collections of text.
