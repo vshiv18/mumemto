@@ -1,12 +1,12 @@
-# **mumemto**: finding multi-MUMs and MEMs using prefix-free parsing for big BWTs
+# **mumemto**: finding multi-MUMs and MEMs in pangenomes
 
-<img src="img/logo.png" alt="logo" width="290" align="left"/>
-This code is based on the <a href="https://github.com/maxrossi91/pfp-thresholds">pfp-thresholds</a> repository written by <a href="https://github.com/maxrossi91">Massimiliano Rossi</a> and <a href="https://github.com/oma219/docprofiles">docprofiles</a> repository written by <a href="https://github.com/oma219">Omar Ahmed</a>. 
+<img src="img/logo.png" alt="logo" width="292" align="left"/>
 
-This tool identifies **maximal unique matches (multi-MUMs)** present across a collection of sequences. Multi-MUMs are defined as maximally matching substrings present in each sequence in a collection *exactly once*. Additionally, this tool can identify **multi-MEMs**, maximal exact matches present across sequences, without the uniqueness property. This method is uses the prefix-free parse (PFP) algorithm for suffix array construction on large, repetitive collections of text.
+Mumemto identifies **maximal unique matches (multi-MUMs)** present across a collection of sequences. Multi-MUMs are defined as maximally matching substrings present in each sequence in a collection *exactly once*. Additionally, this tool can identify **multi-MEMs**, maximal exact matches present across sequences, without the uniqueness property. This method is uses the prefix-free parse (PFP) algorithm for suffix array construction on large, repetitive collections of text.
 
 This tool uses PFP to efficiently identify multi-MUM/MEMs. Note that this applies only to highly repetitive texts (such as a collection of closely related genomes, likely intra-species such as a pangenome). We plan to support multi-MUM/MEM finding in more divergent sequences (inter-species, etc.) soon, however this would be less efficient without the PFP pre-processing step.
 
+The base code from this repo was adapted from <a href="https://github.com/maxrossi91/pfp-thresholds">pfp-thresholds</a> repository written by <a href="https://github.com/maxrossi91">Massimiliano Rossi</a> and <a href="https://github.com/oma219/docprofiles">docprofiles</a> repository written by <a href="https://github.com/oma219">Omar Ahmed</a>. 
 
 ## Installation
 
@@ -18,7 +18,7 @@ docker pull vshiv123/mumemto:latest
 docker run vshiv123/mumemto:latest mumemto -h
 ### if using singularity:
 singularity pull docker://vshiv123/mumemto:latest
-./mumemto_latest.sif mumemto
+./mumemto_latest.sif mumemto -h
 ```
 
 ### Compile from scratch
