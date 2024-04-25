@@ -1,4 +1,4 @@
-# **mumemto**: finding multi-MUMs and MEMs using prefix-free parsing for big BWTs
+# **mumemto**: finding multi-MUMs and MEMs in pangenomes
 
 <img src="img/logo.png" alt="logo" width="290" align="left"/>
 This code is based on the <a href="https://github.com/maxrossi91/pfp-thresholds">pfp-thresholds</a> repository written by <a href="https://github.com/maxrossi91">Massimiliano Rossi</a> and <a href="https://github.com/oma219/docprofiles">docprofiles</a> repository written by <a href="https://github.com/oma219">Omar Ahmed</a>. 
