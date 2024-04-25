@@ -10,8 +10,20 @@ This tool uses PFP to efficiently identify multi-MUM/MEMs. Note that this applie
 
 ## Installation
 
+### Docker/Singularity
+Mumemto is available on `docker` and `singularity`:
+```
+### if using docker:
+docker pull vshiv123/mumemto:latest
+docker run vshiv123/mumemto:latest mumemto -h
+### if using singularity:
+singularity pull docker://vshiv123/mumemto:latest
+./mumemto_latest.sif mumemto
+```
+
+### Compile from scratch
 For starting out, use the commands below to download the repository and build the executable. After running the make command below,
-the `mumemto` executable will be found in the `build/` folder.
+the `mumemto` executable will be found in the `build/` folder. The following are dependencies: cmake, g++, gcc, libboost, zlib
 
 ```sh
 git clone https://github.com/vshiv18/mumemto
