@@ -55,6 +55,7 @@ Mumemto mode options enable the computation of various different classes of exac
 <p align="center">
 <img src="img/viz_def.png" alt="visual_guide" width="600" align="center"/>
 </p>
+
 **Format of the \*.mums file:**
 ```sh
 [MUM length] [comma-delimited list of offsets within each sequence, in order of filelist] [comma-delimited strand indicators (one of +/-)]
