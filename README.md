@@ -1,6 +1,6 @@
 # **mumemto**: finding multi-MUMs and MEMs in pangenomes
 
-<img src="img/logo.png" alt="logo" width="292" align="left"/>
+<img src="img/polaroid_tattoo.png" alt="logo" width="292" align="left"/>
 
 Mumemto identifies **maximal unique matches (multi-MUMs)** present across a collection of sequences. Multi-MUMs are defined as maximally matching substrings present in each sequence in a collection *exactly once*. Additionally, this tool can identify **multi-MEMs**, maximal exact matches present across sequences, without the uniqueness property. This method is uses the prefix-free parse (PFP) algorithm for suffix array construction on large, repetitive collections of text.
 
