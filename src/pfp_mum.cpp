@@ -299,7 +299,7 @@ void print_build_status_info(BuildOptions* opts, bool mum_mode) {
         std::fprintf(stderr, "\tUsing pre-computed LCP/BWT/SA arrays from files with prefix: %s\n", opts->output_prefix.data());
     else 
         std::fprintf(stderr, "\tPFP window size: %d\n", opts->pfp_w);
-    if (opts->arrays_out) {std::fprintf(stderr, "\tWriting LCP, BWT and run-sampled suffix arrays\n");}
+    if (opts->arrays_out) {std::fprintf(stderr, "\tWriting LCP, BWT and suffix arrays\n");}
     std::fprintf(stderr, "\tMinimum %s length: %d\n", match_type.data(), opts->min_match_len);
     std::fprintf(stderr, "\tInclude reverse complement?: %d\n", opts->use_rcomp);
     if (opts->missing_genomes == 0)

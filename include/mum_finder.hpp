@@ -312,7 +312,7 @@ private:
     // write the mum to file
     inline size_t write_mum(std::vector<std::pair<int, int>> const &idxs)
     {
-        std::vector<int> offsets(num_docs);
+        std::vector<size_t> offsets(num_docs);
         std::vector<char> strand(num_docs);
         size_t count = 0;
         int doc;
