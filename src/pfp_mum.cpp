@@ -169,7 +169,7 @@ int build_main(int argc, char** argv, bool mum_mode) {
 
     
 
-    if (!build_opts.keep_temp)
+    if (!build_opts.keep_temp && !build_opts.from_parse)
         remove_temp_files(build_opts.output_ref);
     std::cerr << "\n";
     
