@@ -103,7 +103,7 @@ RefBuilder::RefBuilder(std::string input_data, std::string output_prefix,
             // Added dollar sign as separator, and added 1 to length
             output_fd << '>' << seq->name.s << '\n' << seq->seq.s << '\n';
             curr_id_seq_length += seq->seq.l;
-            
+
             // Get reverse complement, and print it
             // Based on seqtk reverse complement code, that does it 
             // in place. (https://github.com/lh3/seqtk/blob/master/seqtk.c)
@@ -144,10 +144,10 @@ RefBuilder::RefBuilder(std::string input_data, std::string output_prefix,
     for (auto length: seq_lengths) {
         total_input_length += length;
     }
-    
+
     this->total_length = total_input_length;
     this->num_docs = seq_lengths.size();
-
+    
     // Build bitvector/rank support marking the end of each document
     doc_ends = sdsl::bit_vector(total_input_length, 0);
     size_t curr_sum = 0;
