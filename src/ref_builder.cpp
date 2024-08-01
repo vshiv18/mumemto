@@ -34,6 +34,18 @@ char comp_tab[] = {
 	'p', 'q', 'y', 's', 'a', 'a', 'b', 'w', 'x', 'r', 'z', 123, 124, 125, 126, 127
 };
 
+void rev_comp(std::string seq) {
+    int c0, c1;
+    for (size_t i = 0; i < seq.length()>>1; ++i) { // reverse complement sequence
+        c0 = comp_tab[(int)seq[i]];
+        c1 = comp_tab[(int)seq[seq.length() - 1 - i]];
+        seq[i] = c1;
+        seq[seq.length() - 1 - i] = c0;
+    }
+    if (seq.length() & 1) // complement the remaining base
+        seq[seq.length()>>1] = comp_tab[static_cast<int>(seq[seq.length()>>1])];
+}
+
 RefBuilder::RefBuilder(std::string input_data, std::string output_prefix, 
                         bool use_rcomp): input_file(input_data), use_revcomp(use_rcomp) {
     /* Constructor of RefBuilder - builds input reference and determines size of each class */
@@ -81,13 +93,14 @@ RefBuilder::RefBuilder(std::string input_data, std::string output_prefix,
     output_ref = output_prefix + ".fna";
     std::ofstream output_fd (output_ref.data(), std::ofstream::out);
     FILE* fp; kseq_t* seq;
+    std::vector<std::string> seq_vec;
+    std::vector<std::string> name_vec;
     // std::vector<size_t> seq_lengths;
 
     // Start working on building the reference file by reading each file ...
     curr_id = 1;
     size_t curr_id_seq_length = 0;
     for (auto iter = input_files.begin(); iter != input_files.end(); ++iter) {
-
         fp = fopen((*iter).data(), "r"); 
         if(fp == 0) {std::exit(1);}
 
@@ -99,41 +112,36 @@ RefBuilder::RefBuilder(std::string input_data, std::string output_prefix,
 			for (size_t i = 0; i < seq->seq.l; ++i) {
 				seq->seq.s[i] = static_cast<char>(std::toupper(seq->seq.s[i]));
             }
-           
+            seq_vec.push_back(seq->seq.s);
+            name_vec.push_back(seq->name.s);
             // Added dollar sign as separator, and added 1 to length
-            output_fd << '>' << seq->name.s << '\n' << seq->seq.s << '\n';
+            // output_fd << '>' << seq->name.s << '\n' << seq->seq.s << '\n';
             curr_id_seq_length += seq->seq.l;
-
-            // Get reverse complement, and print it
-            // Based on seqtk reverse complement code, that does it 
-            // in place. (https://github.com/lh3/seqtk/blob/master/seqtk.c)
-            if (use_revcomp) {
-                int c0, c1;
-                for (size_t i = 0; i < seq->seq.l>>1; ++i) { // reverse complement sequence
-                    c0 = comp_tab[(int)seq->seq.s[i]];
-                    c1 = comp_tab[(int)seq->seq.s[seq->seq.l - 1 - i]];
-                    seq->seq.s[i] = c1;
-                    seq->seq.s[seq->seq.l - 1 - i] = c0;
-                }
-                if (seq->seq.l & 1) // complement the remaining base
-                    seq->seq.s[seq->seq.l>>1] = comp_tab[static_cast<int>(seq->seq.s[seq->seq.l>>1])];
-
-                // Added dollar sign as separator, and added 1 to length
-                output_fd << '>' << seq->name.s << "_rev_comp" << '\n' << seq->seq.s << '\n';
-                curr_id_seq_length += seq->seq.l;
-            }
         }
         kseq_destroy(seq);
         fclose(fp);
 
-        // Check if we are transitioning to a new group
-        if (iter_index < document_ids.size()-1 && document_ids[iter_index] != document_ids[iter_index+1]){
+        // Check if we are transitioning to a new group OR If it is the last file, output current sequence length
+        if ((iter_index == document_ids.size()-1) || (iter_index < document_ids.size()-1 && document_ids[iter_index] != document_ids[iter_index+1])) {
+            for (auto i = 0; i < seq_vec.size(); ++i) {
+                output_fd << '>' << name_vec.at(i) << '\n' << seq_vec.at(i) << '\n';
+            }
+            // Get reverse complement, and print it
+            // Based on seqtk reverse complement code, that does it 
+            // in place. (https://github.com/lh3/seqtk/blob/master/seqtk.c)
+            if (use_revcomp) {
+                for (auto i = seq_vec.size(); i-- != 0; ) {
+                    rev_comp(seq_vec.at(i));
+                    output_fd << '>' << name_vec.at(i) << "_rev_comp" << '\n' << seq_vec.at(i) << '\n';
+                    curr_id_seq_length += seq_vec.at(i).length();
+                }
+            }
+            // for (auto s = seq_vec.begin(); s != seq_vec.end(); ++s) {
+            //     kseq_destroy(*s);
+            // }
             seq_lengths.push_back(curr_id_seq_length);
             curr_id += 1; curr_id_seq_length = 0;
-        // If it is the last file, output current sequence length
-        } else if (iter_index == document_ids.size()-1){
-            seq_lengths.push_back(curr_id_seq_length);
-            curr_id_seq_length = 0;
+            name_vec.clear(); seq_vec.clear();
         }
     }
     output_fd.close();
