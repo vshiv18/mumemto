@@ -53,21 +53,6 @@ int build_main(int argc, char** argv, bool mum_mode) {
         FATAL_ERROR("An index cannot be build over %ld documents, "
                     "please reduce to a max of 65,535 docs.", ref_build.num_docs);
 
-    if (1) {
-        bool use_input_paths = build_opts.files.size() == ref_build.seq_lengths.size();
-        int includes_rc = build_opts.use_rcomp ? 2 : 1;
-        std::string lengths_fname = build_opts.output_prefix + ".lengths";
-        std::ofstream outfile(lengths_fname);
-        std::string doc_name;
-        for (size_t i = 0; i < ref_build.seq_lengths.size() - 1; ++i) {
-            doc_name = use_input_paths ? build_opts.files[i] : ("sequence_" + std::to_string(i + 1));
-            outfile << doc_name << " " << ref_build.seq_lengths[i] / includes_rc << std::endl;
-        }
-        doc_name = use_input_paths ? build_opts.files[ref_build.seq_lengths.size() - 1] : ("sequence_" + std::to_string(ref_build.seq_lengths.size()));
-        outfile << doc_name << " " << (ref_build.seq_lengths[ref_build.seq_lengths.size() - 1] - 1) / includes_rc << std::endl;
-        outfile.close();
-    }
-
     // Determine the paths to the BigBWT executables
     HelperPrograms helper_bins;
     // if (!std::getenv("PFPMUM_BUILD_DIR")) {FATAL_ERROR("Need to set PFPMUM_BUILD_DIR environment variable.");}

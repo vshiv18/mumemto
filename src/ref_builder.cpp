@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <numeric>
 #include <sdsl/bit_vectors.hpp>
+#include <filesystem>
 
 KSEQ_INIT(int, read);
 
@@ -157,4 +158,20 @@ RefBuilder::RefBuilder(std::string input_data, std::string output_prefix,
         doc_ends[curr_sum-1] = 1;
     }
     doc_ends_rank = sdsl::rank_support_v<1> (&doc_ends); 
+
+    // Write out lengths file
+    if (1) {
+        bool use_input_paths = input_files.size() == seq_lengths.size();
+        int includes_rc = use_revcomp ? 2 : 1;
+        std::string lengths_fname = output_prefix + ".lengths";
+        std::ofstream outfile(lengths_fname);
+        std::string doc_name;
+        for (size_t i = 0; i < seq_lengths.size() - 1; ++i) {
+            doc_name = use_input_paths ? std::filesystem::absolute(input_files[i]).string() : ("sequence_" + std::to_string(i + 1));
+            outfile << doc_name << " " << seq_lengths[i] / includes_rc << std::endl;
+        }
+        doc_name = use_input_paths ? std::filesystem::absolute(input_files[seq_lengths.size() - 1]).string() : ("sequence_" + std::to_string(seq_lengths.size()));
+        outfile << doc_name << " " << (seq_lengths[seq_lengths.size() - 1] - 1) / includes_rc << std::endl;
+        outfile.close();
+    }
 }
