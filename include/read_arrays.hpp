@@ -72,7 +72,7 @@ public:
     template <class T>
     size_t process(T &match_finder) {
         size_t count;
-        for (auto j = 0; j < ref_build->total_length; j++)
+        for (size_t j = 0; j < ref_build->total_length; j++)
         {    
             if (j % (ref_build->total_length / PBWIDTH) == 0)
                         printProgress((double) j / ref_build->total_length);
@@ -85,6 +85,7 @@ public:
             count += match_finder.update(j, bwt_i, doc_i, sa_i, lcp_i);
             // End of MUM computation code
         }
+        printProgress(1.0);
         return count;
     }
 

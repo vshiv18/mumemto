@@ -283,7 +283,7 @@ void print_build_status_info(BuildOptions* opts, bool mum_mode) {
     std::string match_type = mum_mode ? "MUM" : "MEM";
     std::fprintf(stderr, "\tOutput ref path: %s\n", opts->output_ref.data());
     if (opts->arrays_in.length() > 0)
-        std::fprintf(stderr, "\tUsing pre-computed LCP/BWT/SA arrays from files with prefix: %s\n", opts->output_prefix.data());
+        std::fprintf(stderr, "\tUsing pre-computed LCP/BWT/SA arrays from files with prefix: %s\n", opts->arrays_in.data());
     else 
         std::fprintf(stderr, "\tPFP window size: %d\n", opts->pfp_w);
     if (opts->arrays_out) {std::fprintf(stderr, "\tWriting LCP, BWT and suffix arrays\n");}
@@ -381,7 +381,7 @@ int mumemto_build_usage() {
     std::fprintf(stderr, "\t%-18s%-10soutput prefix path\n", "-o, --output", "[arg]");
     std::fprintf(stderr, "\t%-28sinclude the reverse-complement of sequence (default: false)\n\n", "-r, --revcomp");
     std::fprintf(stderr, "\t%-18s%-10sminimum MUM or MEM length (default: 20)\n\n", "-l, --min-match-len", "[INT]");
-    std::fprintf(stderr, "\t%-28swrite LCP, BWT, and SA (run-sampled) to file\n\n", "-A, --arrays-out");
+    std::fprintf(stderr, "\t%-28swrite LCP, BWT, and SA to file\n\n", "-A, --arrays-out");
     std::fprintf(stderr, "\t%-18s%-10scompute matches from precomputed LCP, BWT, SA (with shared PREFIX.bwt/sa/lcp)\n\n", "-a, --arrays-in", "[PREFIX]");
 
     std::fprintf(stderr, "\t%-18s%-10sfind multi-MUMs or multi-MEMs in at least N - k genomes\n\t%-28s(default: 0, match must occur in all sequences, i.e. strict multi-MUM/MEM)\n\n", "-k, --missing-genomes", "[INT]", "");
