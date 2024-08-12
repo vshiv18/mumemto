@@ -128,15 +128,17 @@ public:
     std::vector<size_t> doc_lens;
     size_t topk;
     bool overlap_mum;
+    bool col_mums;
     bool revcomp;
 
-    mum_finder(std::string filename, RefBuilder* ref_build, size_t min_mum_len, size_t topk, bool overlap): 
+    mum_finder(std::string filename, RefBuilder* ref_build, size_t min_mum_len, size_t topk, bool overlap, bool col_mum_mode) : 
                 MIN_MUM_LENGTH(min_mum_len),
                 num_docs(ref_build->num_docs),
                 revcomp(ref_build->use_revcomp),
                 doc_lens(ref_build->seq_lengths),
                 topk(topk),
                 overlap_mum(overlap),
+                col_mums(col_mum_mode),
                 sa_window(num_docs),
                 lcp_pq(num_docs),
                 window_docs(num_docs, num_docs, topk),
@@ -174,8 +176,15 @@ public:
         if(valid_window)
         {
             mum_idxs = is_mum();
-            if (mum_idxs.size() > 0)
-                count = write_mum(j, mum_idxs);
+            if (mum_idxs.size() > 0) {
+                if (col_mums) {
+                    count = write_mum(j, mum_idxs);
+                }
+                else {
+                    count = write_mum(mum_idxs);
+                }
+            }
+
         }
         
         update_lcp_window(right_lcp, valid_window);
@@ -315,16 +324,10 @@ private:
         size_t count = 0;
         int idx;
         size_t mum_length;
+        // TODO
+        // j -= num_docs;
         for (auto data : idxs){
-            // idx = data.first;
             mum_length = data.second;
-            // std::cout << "MUM found: " << mum_length << " at " << j << " with idx " << idx << std::endl;
-
-            // mum_file << std::to_string(mum_length) << '\t';
-            // mum_file << std::to_string(j) << '\t';
-            // mum_file << std::to_string(sa_window[0]) << "\t";
-            // mum_file << std::to_string(sa_window[num_docs - 1]) << "\t";
-            // mum_file << std::endl;
             mum_file.write(reinterpret_cast<const char*>(&mum_length), BWTBYTES);
             mum_file.write(reinterpret_cast<const char*>(&j), SSABYTES);
             mum_file.write(reinterpret_cast<const char*>(&sa_window[0]), SSABYTES);

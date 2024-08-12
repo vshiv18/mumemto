@@ -95,7 +95,7 @@ int build_main(int argc, char** argv, bool mum_mode) {
         start = std::chrono::system_clock::now();
         if (mum_mode){
             STATUS_LOG("build_main", "finding multi-MUMs from pfp\n");
-            mum_finder match_finder(build_opts.output_prefix, &ref_build, build_opts.min_match_len, build_opts.missing_genomes + 1, build_opts.overlap);
+            mum_finder match_finder(build_opts.output_prefix, &ref_build, build_opts.min_match_len, build_opts.missing_genomes + 1, build_opts.overlap, build_opts.col_mum_mode);
             input_lcp.process(match_finder);
             match_finder.close();
         }
@@ -138,7 +138,7 @@ int build_main(int argc, char** argv, bool mum_mode) {
     
     start = std::chrono::system_clock::now();
     
-    pfp_lcp lcp(pf, build_opts.output_prefix, &ref_build, build_opts.arrays_out, build_opts.rlbwt_out);
+    pfp_lcp lcp(pf, build_opts.output_prefix, &ref_build, build_opts.arrays_out, build_opts.rlbwt_out, build_opts.thresholds_out);
     size_t count = 0;
 
     if (build_opts.rare_freq > 1){
@@ -149,7 +149,7 @@ int build_main(int argc, char** argv, bool mum_mode) {
     }
     else if (mum_mode){
         STATUS_LOG("build_main", "finding multi-MUMs from pfp");
-        mum_finder match_finder(build_opts.output_prefix, &ref_build, build_opts.min_match_len, build_opts.missing_genomes + 1, build_opts.overlap);
+        mum_finder match_finder(build_opts.output_prefix, &ref_build, build_opts.min_match_len, build_opts.missing_genomes + 1, build_opts.overlap, build_opts.col_mum_mode);
         count = lcp.process(match_finder);
         match_finder.close();
     }
@@ -303,6 +303,9 @@ void print_build_status_info(BuildOptions* opts, bool mum_mode) {
         std::fprintf(stderr, "\tPFP window size: %d\n", opts->pfp_w);
     if (opts->arrays_out) {std::fprintf(stderr, "\tWriting LCP, BWT and suffix arrays\n");}
     if (opts->rlbwt_out) {std::fprintf(stderr, "\tWriting RLBWT and run-sampled suffix arrays\n");}
+    if (opts->thresholds_out) {std::fprintf(stderr, "\tWriting thresholds\n");}
+    if (opts->col_mum_mode) {std::fprintf(stderr, "\tFinding col-MUMs, written in byte output\n");}
+    else {std::fprintf(stderr, "\tFinding multi-MUMs written in human readable output\n");}
     std::fprintf(stderr, "\tMinimum %s length: %d\n", match_type.data(), opts->min_match_len);
     std::fprintf(stderr, "\tInclude reverse complement?: %d\n", opts->use_rcomp);
     if (opts->missing_genomes == 0)
@@ -352,6 +355,9 @@ void parse_build_options(int argc, char** argv, BuildOptions* opts) {
         {"max-freq",   required_argument, NULL,  'F'},
         {"arrays-out",   no_argument, NULL,  'A'},
         {"arrays-in",   required_argument, NULL,  'a'},
+        {"rlbwt-out",   no_argument, NULL,  'R'},
+        {"thresholds-out",   no_argument, NULL,  't'},
+        {"regular-mum",   no_argument, NULL,  'M'},
         {"keep-temp-files",   no_argument, NULL,  'K'},
         {"window",   required_argument, NULL,  'w'},
         {"rare",   required_argument, NULL,  'x'},
@@ -374,6 +380,8 @@ void parse_build_options(int argc, char** argv, BuildOptions* opts) {
             case 'l': opts->min_match_len = std::atoi(optarg); break;
             case 'F': opts->max_mem_freq = std::atoi(optarg); break;
             case 'R': opts->rlbwt_out = true; break;
+            case 'T': opts->thresholds_out = true; break;
+            case 'M': opts->col_mum_mode = false; break;
             case 'A': opts->arrays_out = true; break;
             case 'a': opts->arrays_in.assign(optarg); break;
             case 'K': opts->keep_temp = true; break;
@@ -400,11 +408,13 @@ int mumemto_build_usage() {
     std::fprintf(stderr, "\t%-18s%-10sminimum MUM or MEM length (default: 20)\n\n", "-l, --min-match-len", "[INT]");
     std::fprintf(stderr, "\t%-28swrite LCP, BWT, and SA to file\n\n", "-A, --arrays-out");
     std::fprintf(stderr, "\t%-28swrite RLBWT and SA (run-sampled) to file\n\n", "-R, --rlbwt-out");
+    std::fprintf(stderr, "\t%-28swrite threshold positions and values to file\n\n", "-T, --thresholds-out");
     std::fprintf(stderr, "\t%-18s%-10scompute matches from precomputed LCP, BWT, SA (with shared PREFIX.bwt/sa/lcp)\n\n", "-a, --arrays-in", "[PREFIX]");
 
     std::fprintf(stderr, "\t%-18s%-10sfind multi-MUMs or multi-MEMs in at least N - k genomes\n\t%-28s(default: 0, match must occur in all sequences, i.e. strict multi-MUM/MEM)\n\n", "-k, --missing-genomes", "[INT]", "");
     std::fprintf(stderr, "MUM mode options:\n");
     std::fprintf(stderr, "\t%-28soutput subset multi-MUMs that overlap shorter, more complete multi-MUMs (default: true w/ -k)\n", "-p, --no-overlap");
+    std::fprintf(stderr, "\t%-28scompute regular multi-MUM output (default: col-MUMs in binary output)\n\n", "-M, --regular-mum");
     
     std::fprintf(stderr, "MEM mode options:\n");
     std::fprintf(stderr, "\t%-18s%-10smaximum number of occurences of MEM, beyond N \n\t%-28s(default: -1, no upper limit. Note: -k 0 -F 0 will result in strict multi-MUMs)\n", "-F, --max-freq","[INT]", "");
