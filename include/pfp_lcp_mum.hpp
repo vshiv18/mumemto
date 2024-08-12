@@ -74,6 +74,9 @@ public:
                 pos_s(0),
                 head(0),
                 num_run(0),
+                thresholds(256, pf.n),
+                thresholds_pos(256, 0),
+                never_seen(256, true),
                 ref_build(ref_build),
                 write_arrays(write_arrays),
                 write_rlbwt(write_rlbwt),
@@ -81,11 +84,11 @@ public:
     {
         // Opening output files
         if (write_thresholds) {
-            std::string outfile = filename + std::string(".thr");
+            std::string outfile = filename + std::string(".fna.thr");
             if ((thr_file = fopen(outfile.c_str(), "w")) == nullptr)
                 error("open() file " + outfile + " failed");
 
-            outfile = filename + std::string(".thr_pos");
+            outfile = filename + std::string(".fna.thr_pos");
             if ((thr_pos_file = fopen(outfile.c_str(), "w")) == nullptr)
                 error("open() file " + outfile + " failed");
         }
@@ -439,7 +442,7 @@ private:
         if(length > 0)
         {
             // Write the head
-            if (fputc(head, bwt_file) == EOF)
+            if (fputc(head, bwt_head_file) == EOF)
                 error("BWT write error 1");
             
             // Write the length
