@@ -175,7 +175,7 @@ public:
         {
             mum_idxs = is_mum();
             if (mum_idxs.size() > 0)
-                count = write_mum(mum_idxs);
+                count = write_mum(j, mum_idxs);
         }
         
         update_lcp_window(right_lcp, valid_window);
@@ -307,6 +307,31 @@ private:
                 return mum_subset;
         }
         return mum_subset;
+    }
+
+    // write the mum to file
+    inline size_t write_mum(size_t const j, std::vector<std::pair<int, int>> const &idxs)
+    {
+        size_t count = 0;
+        int idx;
+        size_t mum_length;
+        for (auto data : idxs){
+            // idx = data.first;
+            mum_length = data.second;
+            // std::cout << "MUM found: " << mum_length << " at " << j << " with idx " << idx << std::endl;
+
+            // mum_file << std::to_string(mum_length) << '\t';
+            // mum_file << std::to_string(j) << '\t';
+            // mum_file << std::to_string(sa_window[0]) << "\t";
+            // mum_file << std::to_string(sa_window[num_docs - 1]) << "\t";
+            // mum_file << std::endl;
+            mum_file.write(reinterpret_cast<const char*>(&mum_length), BWTBYTES);
+            mum_file.write(reinterpret_cast<const char*>(&j), SSABYTES);
+            mum_file.write(reinterpret_cast<const char*>(&sa_window[0]), SSABYTES);
+            mum_file.write(reinterpret_cast<const char*>(&sa_window[num_docs - 1]), SSABYTES);
+            count += 1;
+        }
+        return count;
     }
 
     // write the mum to file

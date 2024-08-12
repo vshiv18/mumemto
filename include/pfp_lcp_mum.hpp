@@ -66,7 +66,7 @@ public:
 
     size_t num_run;
 
-    pfp_lcp(pf_parsing &pfp_, std::string filename, RefBuilder* ref_build, bool write_arrays) : 
+    pfp_lcp(pf_parsing &pfp_, std::string filename, RefBuilder* ref_build, bool write_arrays, bool write_rlbwt) : 
                 pf(pfp_),
                 min_s(1, pf.n),
                 pos_s(1,0),
@@ -89,6 +89,23 @@ public:
             if ((bwt_file = fopen(outfile.c_str(), "w")) == nullptr)
                 error("open() file " + outfile + " failed");
         }
+        else if (write_rlbwt) {
+            std::string outfile = filename + std::string(".fna.ssa");
+            if ((ssa_file = fopen(outfile.c_str(), "w")) == nullptr)
+                error("open() file " + outfile + " failed");
+
+            outfile = filename + std::string(".fna.esa");
+            if ((esa_file = fopen(outfile.c_str(), "w")) == nullptr)
+                error("open() file " + outfile + " failed");
+
+            outfile = filename + std::string(".fna.bwt.heads");
+            if ((bwt_head_file = fopen(outfile.c_str(), "w")) == nullptr)
+                error("open() file " + outfile + " failed");
+
+            outfile = filename + std::string(".fna.bwt.len");
+            if ((bwt_len_file = fopen(outfile.c_str(), "w")) == nullptr)
+                error("open() file " + outfile + " failed");
+        }
         assert(pf.dict.d[pf.dict.saD[0]] == EndOfDict);
     }
 
@@ -98,6 +115,12 @@ public:
             fclose(sa_file);
             fclose(bwt_file);
             fclose(lcp_file);
+        }
+        else if (write_rlbwt) {
+            fclose(ssa_file);
+            fclose(esa_file);
+            fclose(bwt_head_file);
+            fclose(bwt_len_file);
         }
         
     }
@@ -232,8 +255,13 @@ private:
 
     FILE *bwt_file;
 
+    FILE *bwt_head_file;
+    FILE *bwt_len_file;
+
     FILE *sa_file;
-    // FILE *esa_file;
+
+    FILE *ssa_file;
+    FILE *esa_file;
 
     inline bool inc(phrase_suffix_t& s)
     {
@@ -338,15 +366,28 @@ private:
             if (fwrite(&ssa, SSABYTES, 1, sa_file) != 1)
                 error("SA write error");
         }
+    }
 
-        // if (j > 0)
-        // {
-        //     size_t pos = j - 1;
-        //     if (fwrite(&pos, SSABYTES, 1, esa_file) != 1)
-        //         error("SA write error 1");
-        //     if (fwrite(&esa, SSABYTES, 1, esa_file) != 1)
-        //         error("SA write error 2");
-        // }
+    inline void print_sampled_sa()
+    {
+        if (j < (pf.n - pf.w + 1ULL))
+        {
+            size_t pos = j;
+            if (fwrite(&pos, SSABYTES, 1, ssa_file) != 1)
+                error("SA write error 1");
+            if (fwrite(&ssa, SSABYTES, 1, ssa_file) != 1)
+                error("SA write error 2");
+        }
+
+        if(j > 0)
+        {
+            size_t pos = j-1;
+            if (fwrite(&pos, SSABYTES, 1, esa_file) != 1)
+                error("SA write error 1");
+            if (fwrite(&esa, SSABYTES, 1, esa_file) != 1)
+                error("SA write error 2");
+        }
+
     }
 
     inline void print_bwt()
@@ -358,12 +399,31 @@ private:
         }
     }
 
+    inline void print_rlbwt()
+    {
+        if(length > 0)
+        {
+            // Write the head
+            if (fputc(head, bwt_file) == EOF)
+                error("BWT write error 1");
+            
+            // Write the length
+            if (fwrite(&length, BWTBYTES, 1, bwt_file_len) != 1)
+                error("BWT write error 2");
+        }
+    }
+
     inline void update_bwt(uint8_t next_char, size_t length_)
     {
         if (head != next_char)
         {
-            if (write_arrays)
+            if (write_arrays) {
                 print_bwt();
+            }
+            else if (write_rlbwt) {
+                print_sampled_sa();
+                print_rlbwt();
+            }
 
             head = next_char;
 
