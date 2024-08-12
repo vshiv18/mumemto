@@ -54,16 +54,18 @@ int build_main(int argc, char** argv, bool mum_mode) {
                     "please reduce to a max of 65,535 docs.", ref_build.num_docs);
 
     if (1) {
+        bool use_input_paths = build_opts.files.size() == ref_build.seq_lengths.size();
         int includes_rc = build_opts.use_rcomp ? 2 : 1;
-        for (auto i = 0; i < build_opts.files.size(); i++){
-            std::string lengths_fname = build_opts.output_prefix + ".lengths";
-            std::ofstream outfile(lengths_fname);
-            for (size_t i = 0; i < build_opts.files.size() - 1; ++i) {
-                outfile << build_opts.files[i] << " " << ref_build.seq_lengths[i] / includes_rc << std::endl;
-            }
-            outfile << build_opts.files[build_opts.files.size() - 1] << " " << (ref_build.seq_lengths[build_opts.files.size() - 1] - 1) / includes_rc << std::endl;
-            outfile.close();
-        }  
+        std::string lengths_fname = build_opts.output_prefix + ".lengths";
+        std::ofstream outfile(lengths_fname);
+        std::string doc_name;
+        for (size_t i = 0; i < ref_build.seq_lengths.size() - 1; ++i) {
+            doc_name = use_input_paths ? build_opts.files[i] : ("sequence_" + std::to_string(i + 1));
+            outfile << doc_name << " " << ref_build.seq_lengths[i] / includes_rc << std::endl;
+        }
+        doc_name = use_input_paths ? build_opts.files[ref_build.seq_lengths.size() - 1] : ("sequence_" + std::to_string(ref_build.seq_lengths.size()));
+        outfile << doc_name << " " << (ref_build.seq_lengths[ref_build.seq_lengths.size() - 1] - 1) / includes_rc << std::endl;
+        outfile.close();
     }
 
     // Determine the paths to the BigBWT executables
@@ -169,7 +171,7 @@ int build_main(int argc, char** argv, bool mum_mode) {
 
     
 
-    if (!build_opts.keep_temp)
+    if (!build_opts.keep_temp && !build_opts.from_parse)
         remove_temp_files(build_opts.output_ref);
     std::cerr << "\n";
     

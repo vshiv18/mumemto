@@ -21,6 +21,7 @@ def parse_arguments():
     parser.add_argument('--inversion-color','-ic', dest='inv_color', help='color for inversions', default='green')
     parser.add_argument('--mum-color','-mc', dest='mum_color', help='opacity of mums [0-1]', default=0.9, type=float)
     parser.add_argument('--fout','-o', dest='filename', help='plot fname (default: input_prefix)')
+    parser.add_argument('--dims', dest='size', help='fig dimensions (inches) (default: 20,10)', default=(20,10), type=float, nargs=2)
     parser.add_argument('--dpi','-d', dest='dpi', help='dpi', default=500, type=int)
     
     args = parser.parse_args()
@@ -102,11 +103,9 @@ def draw_synteny(genome_lengths, mums, lenfilter=0, dpi=500, size=None, genomes=
     ax.set_ylim(0, len(genome_lengths))
     ax.set_xlim(0, max_length)
     fig.set_tight_layout(True)
-    # ax.axis('off')
+    ax.axis('off')
     if size:
         fig.set_size_inches(*size)
-    else:
-        fig.set_size_inches((6.4, len(genome_lengths) // 10))
     if filename:
         fig.savefig(os.path.join(os.path.dirname(args.mumfile), filename + ('' if filename.endswith('.png') else '.png')), dpi=dpi)
     return ax
@@ -118,7 +117,7 @@ def main(args):
     else:
         genome_names = None
     mums = parse_mums(args)
-    draw_synteny(seq_lengths, mums, lenfilter=args.lenfilter, genomes=genome_names, filename=args.filename, dpi=args.dpi)
+    draw_synteny(seq_lengths, mums, lenfilter=args.lenfilter, genomes=genome_names, filename=args.filename, dpi=args.dpi, size=args.size)
 
 def parse_mums(args):
     count = 0
