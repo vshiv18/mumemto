@@ -252,6 +252,10 @@ public:
             print_sa();
             print_bwt();
         }
+        else if (write_rlbwt) {
+            print_sampled_sa();
+            print_rlbwt();
+        }
         printProgress(1.0);
         return count;
     }
