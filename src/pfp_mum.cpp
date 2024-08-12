@@ -138,7 +138,7 @@ int build_main(int argc, char** argv, bool mum_mode) {
     
     start = std::chrono::system_clock::now();
     
-    pfp_lcp lcp(pf, build_opts.output_prefix, &ref_build, build_opts.arrays_out);
+    pfp_lcp lcp(pf, build_opts.output_prefix, &ref_build, build_opts.arrays_out, build_opts.rlbwt_out);
     size_t count = 0;
 
     if (build_opts.rare_freq > 1){
@@ -302,6 +302,7 @@ void print_build_status_info(BuildOptions* opts, bool mum_mode) {
     else 
         std::fprintf(stderr, "\tPFP window size: %d\n", opts->pfp_w);
     if (opts->arrays_out) {std::fprintf(stderr, "\tWriting LCP, BWT and suffix arrays\n");}
+    if (opts->rlbwt_out) {std::fprintf(stderr, "\tWriting RLBWT and run-sampled suffix arrays\n");}
     std::fprintf(stderr, "\tMinimum %s length: %d\n", match_type.data(), opts->min_match_len);
     std::fprintf(stderr, "\tInclude reverse complement?: %d\n", opts->use_rcomp);
     if (opts->missing_genomes == 0)
@@ -372,6 +373,7 @@ void parse_build_options(int argc, char** argv, BuildOptions* opts) {
             case 's': opts->from_parse = true; break;
             case 'l': opts->min_match_len = std::atoi(optarg); break;
             case 'F': opts->max_mem_freq = std::atoi(optarg); break;
+            case 'R': opts->rlbwt_out = true; break;
             case 'A': opts->arrays_out = true; break;
             case 'a': opts->arrays_in.assign(optarg); break;
             case 'K': opts->keep_temp = true; break;
@@ -396,7 +398,8 @@ int mumemto_build_usage() {
     std::fprintf(stderr, "\t%-18s%-10soutput prefix path\n", "-o, --output", "[arg]");
     std::fprintf(stderr, "\t%-28sinclude the reverse-complement of sequence (default: false)\n\n", "-r, --revcomp");
     std::fprintf(stderr, "\t%-18s%-10sminimum MUM or MEM length (default: 20)\n\n", "-l, --min-match-len", "[INT]");
-    std::fprintf(stderr, "\t%-28swrite LCP, BWT, and SA (run-sampled) to file\n\n", "-A, --arrays-out");
+    std::fprintf(stderr, "\t%-28swrite LCP, BWT, and SA to file\n\n", "-A, --arrays-out");
+    std::fprintf(stderr, "\t%-28swrite RLBWT and SA (run-sampled) to file\n\n", "-R, --rlbwt-out");
     std::fprintf(stderr, "\t%-18s%-10scompute matches from precomputed LCP, BWT, SA (with shared PREFIX.bwt/sa/lcp)\n\n", "-a, --arrays-in", "[PREFIX]");
 
     std::fprintf(stderr, "\t%-18s%-10sfind multi-MUMs or multi-MEMs in at least N - k genomes\n\t%-28s(default: 0, match must occur in all sequences, i.e. strict multi-MUM/MEM)\n\n", "-k, --missing-genomes", "[INT]", "");
