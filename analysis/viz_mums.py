@@ -2,6 +2,7 @@ from matplotlib import pyplot as plt
 from matplotlib.collections import PolyCollection
 import os
 import argparse
+from tqdm.auto import tqdm
 
 def parse_arguments():    
     parser = argparse.ArgumentParser(description="Plots a synteny plot of MUMs from mumemto")
@@ -23,6 +24,7 @@ def parse_arguments():
     parser.add_argument('--fout','-o', dest='filename', help='plot fname (default: input_prefix)')
     parser.add_argument('--dims', dest='size', help='fig dimensions (inches) (default: 20,10)', default=(20,10), type=float, nargs=2)
     parser.add_argument('--dpi','-d', dest='dpi', help='dpi', default=500, type=int)
+    parser.add_argument('--verbose','-v', dest='verbose', help='verbose mode', action='store_true', default=False)
     
     args = parser.parse_args()
     if args.mumfile:
@@ -75,13 +77,14 @@ def get_polygons(args, mums, genome_lengths, lenfilter=0, offset=0, color=(0.8, 
             colors.append(color)
     return polygons, colors
 
-def draw_synteny(genome_lengths, mums, lenfilter=0, dpi=500, size=None, genomes=None, filename=None):
+def draw_synteny(genome_lengths, mums, lenfilter=0, dpi=500, size=None, genomes=None, filename=None, verbose=False):
     fig, ax = plt.subplots()
     max_length = max(genome_lengths)
     # centering = [0] * len(genome_lengths)
     # if args.center:
     #     centering = [(max_length - g) / 2 for g in genome_lengths]
-    #     # ax.plot([centering[idx] + 0, centering[idx] + g], [idx, idx], color='gray', alpha=0.2, linewidth=0.5)
+    for idx, g in enumerate(genome_lengths):
+        ax.plot([0,g], [idx, idx], alpha=0.2, linewidth=0.5)
     # polygons = []
     # for (l, starts, strands) in mums:
     #     if l < lenfilter:
@@ -90,6 +93,7 @@ def draw_synteny(genome_lengths, mums, lenfilter=0, dpi=500, size=None, genomes=
     #     starts, ends = tuple(zip(*points))
     #     points = starts + ends[::-1]
     #     polygons.append(points)
+    mums = tqdm(mums) if verbose else mums
     polygons, colors = get_polygons(args, mums, genome_lengths, lenfilter=lenfilter, color=tuple([args.mum_color] * 3), inv_color=args.inv_color)
     ax.add_collection(PolyCollection(polygons, linewidths=.1, alpha=0.05, edgecolors=colors, facecolors=colors))
     ax.yaxis.set_ticks(range(len(genome_lengths)))
@@ -100,7 +104,7 @@ def draw_synteny(genome_lengths, mums, lenfilter=0, dpi=500, size=None, genomes=
         ax.yaxis.set_ticklabels([])
     ax.set_xlabel('bp')
     ax.set_ylabel('sequences')
-    ax.set_ylim(0, len(genome_lengths))
+    ax.set_ylim(0, len(genome_lengths)-1)
     ax.set_xlim(0, max_length)
     fig.set_tight_layout(True)
     ax.axis('off')
@@ -117,7 +121,7 @@ def main(args):
     else:
         genome_names = None
     mums = parse_mums(args)
-    draw_synteny(seq_lengths, mums, lenfilter=args.lenfilter, genomes=genome_names, filename=args.filename, dpi=args.dpi, size=args.size)
+    draw_synteny(seq_lengths, mums, lenfilter=args.lenfilter, genomes=genome_names, filename=args.filename, dpi=args.dpi, size=args.size, verbose=args.verbose)
 
 def parse_mums(args):
     count = 0
