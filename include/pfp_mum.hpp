@@ -64,6 +64,9 @@ struct BuildOptions {
         // size_t threads = 0;
         bool is_fasta = true;
         bool arrays_out = false;
+        bool rlbwt_out = false;
+        bool thresholds_out = false;
+        bool col_mum_mode = true;
         std::string  arrays_in = "";
         bool keep_temp = false;
         size_t missing_genomes = 0;
