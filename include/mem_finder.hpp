@@ -257,7 +257,9 @@ private:
 class rare_mem_finder : public mem_finder {
 public:
     rare_mem_finder(std::string filename, RefBuilder* ref_build, size_t min_mem_len, size_t num_distinct, int max_freq)
-        : mem_finder(filename, ref_build, min_mem_len, num_distinct, max_freq) {}
+        : mem_finder(filename, ref_build, min_mem_len, num_distinct, max_freq) {
+            this->MAX_FREQ = max_freq;
+        }
 
 private:
     inline bool check_doc_range(size_t start, size_t end) {
@@ -293,7 +295,7 @@ private:
             current_mems.pop_back();
             if (interval.second >= MIN_MEM_LENGTH && 
                 j - interval.first >= NUM_DISTINCT && 
-                (no_max_freq || j - interval.first <= (NUM_DISTINCT * MAX_FREQ)) &&
+                (j - interval.first <= (NUM_DISTINCT * MAX_FREQ)) &&
                 !check_bwt_range(interval.first, j-1) && check_doc_range(interval.first, j-1)) {
                     write_mem(interval.second, interval.first, j - 1);
                     count++;
