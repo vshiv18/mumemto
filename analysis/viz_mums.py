@@ -20,7 +20,8 @@ def parse_arguments():
     parser.add_argument('--subsample','-s', dest='subsample', help='subsample every Nth mum', default=1, type=int)
     parser.add_argument('--center','-c', dest='center', action='store_true', help='center plot', default=False)
     parser.add_argument('--inversion-color','-ic', dest='inv_color', help='color for inversions', default='green')
-    parser.add_argument('--mum-color','-mc', dest='mum_color', help='opacity of mums [0-1]', default=0.9, type=float)
+    parser.add_argument('--mum-color','-mc', dest='mum_color', help='color for forward strand mums', default='black')
+    parser.add_argument('--alpha','-a', dest='alpha', help='opacity of mums [0-1]', default=0.8, type=float)
     parser.add_argument('--fout','-o', dest='filename', help='plot fname (default: input_prefix)')
     parser.add_argument('--dims', dest='size', help='fig dimensions (inches) (default: 20,10)', default=(20,10), type=float, nargs=2)
     parser.add_argument('--dpi','-d', dest='dpi', help='dpi', default=500, type=int)
@@ -72,7 +73,7 @@ def get_polygons(args, mums, genome_lengths, lenfilter=0, offset=0, color=(0.8, 
                 polygons.append(points_to_poly(points[-2:]))
                 colors.append(inv_color)
                 points = [points[-1]]
-        if len(points) > 2:
+        if len(points) >= 2:
             polygons.append(points_to_poly(points))
             colors.append(color)
     return polygons, colors
@@ -80,38 +81,44 @@ def get_polygons(args, mums, genome_lengths, lenfilter=0, offset=0, color=(0.8, 
 def draw_synteny(genome_lengths, mums, lenfilter=0, dpi=500, size=None, genomes=None, filename=None, verbose=False):
     fig, ax = plt.subplots()
     max_length = max(genome_lengths)
-    # centering = [0] * len(genome_lengths)
-    # if args.center:
-    #     centering = [(max_length - g) / 2 for g in genome_lengths]
+    centering = [0] * len(genome_lengths)
+    if args.center:
+        centering = [(max_length - g) / 2 for g in genome_lengths]
     for idx, g in enumerate(genome_lengths):
-        ax.plot([0,g], [idx, idx], alpha=0.2, linewidth=0.5)
-    # polygons = []
-    # for (l, starts, strands) in mums:
-    #     if l < lenfilter:
-    #         continue
-    #     points = [((centering[idx] + x, idx), (centering[idx] + x + l, idx)) if strand == '+' else ((centering[idx] + genome_lengths[idx] - x - l, idx), (centering[idx] + genome_lengths[idx] - x, idx)) for idx, (x, strand) in enumerate(zip(starts, strands))]
-    #     starts, ends = tuple(zip(*points))
-    #     points = starts + ends[::-1]
-    #     polygons.append(points)
+        ax.plot([centering[idx] + 0,centering[idx] + g], [idx, idx], alpha=0.2, linewidth=0.75)
     mums = tqdm(mums) if verbose else mums
-    polygons, colors = get_polygons(args, mums, genome_lengths, lenfilter=lenfilter, color=tuple([args.mum_color] * 3), inv_color=args.inv_color)
-    ax.add_collection(PolyCollection(polygons, linewidths=.1, alpha=0.05, edgecolors=colors, facecolors=colors))
+    polygons, colors = get_polygons(args, mums, genome_lengths, lenfilter=lenfilter, color=args.mum_color, inv_color=args.inv_color) #tuple([args.mum_color] * 3)
+    ax.add_collection(PolyCollection(polygons, linewidths=0, alpha=args.alpha, edgecolors=colors, facecolors=colors))
     ax.yaxis.set_ticks(range(len(genome_lengths)))
     ax.tick_params(axis='y', which='both',length=0)
     if genomes:
         ax.set_yticklabels(genomes)
     else:
         ax.yaxis.set_ticklabels([])
-    ax.set_xlabel('bp')
+    ax.set_xlabel('genomic position')
     ax.set_ylabel('sequences')
     ax.set_ylim(0, len(genome_lengths)-1)
     ax.set_xlim(0, max_length)
+    ax.invert_yaxis()
     fig.set_tight_layout(True)
-    ax.axis('off')
+    # ax.axis('off')
+    
+    ax.get_yaxis().set_visible(False)
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['left'].set_visible(False)
+    ax.tick_params(axis='y', which='both', left=False, right=False, labelleft=False)
+    ax.grid(False)
+
     if size:
         fig.set_size_inches(*size)
     if filename:
-        fig.savefig(os.path.join(os.path.dirname(args.mumfile), filename + ('' if filename.endswith('.png') else '.png')), dpi=dpi)
+        filename = filename + ('' if filename.endswith('.png') else '.png')
+        if os.path.dirname(filename):
+            path = filename
+        else:
+            path = os.path.join(os.path.dirname(args.mumfile), filename)
+        fig.savefig(path, dpi=dpi)
     return ax
 
 def main(args):
