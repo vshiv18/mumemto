@@ -20,8 +20,7 @@ def parse_arguments():
     parser.add_argument('--subsample','-s', dest='subsample', help='subsample every Nth mum', default=1, type=int)
     parser.add_argument('--center','-c', dest='center', action='store_true', help='center plot', default=False)
     parser.add_argument('--inversion-color','-ic', dest='inv_color', help='color for inversions', default='green')
-    parser.add_argument('--mum-color','-mc', dest='mum_color', help='color for forward strand mums', default='black')
-    parser.add_argument('--alpha','-a', dest='alpha', help='opacity of mums [0-1]', default=0.8, type=float)
+    parser.add_argument('--mum-color','-mc', dest='mum_color', help='opacity of mums [0-1]', default=0.2, type=float)
     parser.add_argument('--fout','-o', dest='filename', help='plot fname (default: input_prefix)')
     parser.add_argument('--dims', dest='size', help='fig dimensions (inches) (default: 20,10)', default=(20,10), type=float, nargs=2)
     parser.add_argument('--dpi','-d', dest='dpi', help='dpi', default=500, type=int)
@@ -34,7 +33,7 @@ def parse_arguments():
     else:
         args.mumfile = args.prefix + '.mums'
         args.lens = args.prefix + '.lengths'
-        
+    args.mum_color = 1 - args.mum_color
     if not args.filename:
         args.filename = args.prefix
     return args
@@ -87,8 +86,8 @@ def draw_synteny(genome_lengths, mums, lenfilter=0, dpi=500, size=None, genomes=
     for idx, g in enumerate(genome_lengths):
         ax.plot([centering[idx] + 0,centering[idx] + g], [idx, idx], alpha=0.2, linewidth=0.75)
     mums = tqdm(mums) if verbose else mums
-    polygons, colors = get_polygons(args, mums, genome_lengths, lenfilter=lenfilter, color=args.mum_color, inv_color=args.inv_color) #tuple([args.mum_color] * 3)
-    ax.add_collection(PolyCollection(polygons, linewidths=0, alpha=args.alpha, edgecolors=colors, facecolors=colors))
+    polygons, colors = get_polygons(args, mums, genome_lengths, lenfilter=lenfilter, color=tuple([args.mum_color]*3), inv_color=args.inv_color)
+    ax.add_collection(PolyCollection(polygons, linewidths=0.1, alpha=0.05, edgecolors=colors, facecolors=colors))
     ax.yaxis.set_ticks(range(len(genome_lengths)))
     ax.tick_params(axis='y', which='both',length=0)
     if genomes:
