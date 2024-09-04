@@ -313,9 +313,9 @@ private:
 };
 
 
-class partial_mum_finder : public mem_finder {
+class mum_finder : public mem_finder {
 public:
-    partial_mum_finder(std::string filename, RefBuilder* ref_build, size_t min_mem_len, size_t num_distinct)
+    mum_finder(std::string filename, RefBuilder* ref_build, size_t min_mem_len, size_t num_distinct)
         : mem_finder(filename, ref_build, min_mem_len, num_distinct, 0) {}
 
 private:
