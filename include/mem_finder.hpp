@@ -313,4 +313,52 @@ private:
 };
 
 
+class partial_mum_finder : public mem_finder {
+public:
+    partial_mum_finder(std::string filename, RefBuilder* ref_build, size_t min_mem_len, size_t num_distinct)
+        : mem_finder(filename, ref_build, min_mem_len, num_distinct, 0) {}
+
+private:
+    inline bool check_doc_range(size_t start, size_t end) {
+        std::unordered_set<size_t> seen;
+        size_t iterations = end - start + 1;
+        size_t idx = 0;
+        std::deque<size_t>::iterator it = da_buffer.begin() + (start - buffer_start);
+        while (idx < iterations) {
+            if (!seen.count(*it))
+                seen.insert(*it);
+            else
+                return false;
+            it++;
+            idx++;
+        }
+        return true;
+    }
+
+    inline size_t update_mems(size_t j, size_t lcp) {
+        size_t count = 0;
+        size_t start = j - 1;
+        std::pair<size_t, size_t> interval;
+        while (lcp < current_mems.back().second) {
+            interval = current_mems.back();
+            current_mems.pop_back();
+            if (interval.second >= MIN_MEM_LENGTH && 
+                j - interval.first >= NUM_DISTINCT && 
+                (j - interval.first <= num_docs) &&
+                !check_bwt_range(interval.first, j-1) && check_doc_range(interval.first, j-1)) {
+                    write_mem(interval.second, interval.first, j - 1);
+                    count++;
+                }
+            start = interval.first;
+        }
+
+        if (lcp > current_mems.back().second) {
+            if (lcp >= MIN_MEM_LENGTH)
+                current_mems.push_back(std::make_pair(start, lcp));
+        }
+
+        return count;
+    }
+};
+
 #endif /* end of include guard: _MEM_HH */
