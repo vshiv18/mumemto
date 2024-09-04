@@ -66,6 +66,10 @@ int build_main(int argc, char** argv, bool mum_mode) {
     helper_bins.build_paths((path / "bin/").string());
     helper_bins.validate();
 
+    if (build_opts.missing_genomes < 0)
+        build_opts.missing_genomes = build_opts.missing_genomes * -1;
+    else if (build_opts.missing_genomes > 0)
+        build_opts.missing_genomes = ref_build.num_docs - build_opts.missing_genomes;
     if (build_opts.missing_genomes >= ref_build.num_docs - 1)
     {
         std::string match_type = mum_mode ? "MUMs" : "MEMs";
@@ -376,6 +380,7 @@ int mumemto_build_usage() {
     std::fprintf(stderr, "Usage: mumemto [mum | mem] [options] [input_fasta [...]]\n\n");
 
     std::fprintf(stderr, "Options:\n");
+    std::fprintf(stderr, "*** for all options, N = # of sequences ***\n");
     std::fprintf(stderr, "\t%-28sprints this usage message\n", "-h, --help");
     std::fprintf(stderr, "\t%-18s%-10spath to a file-list of genomes to use (overrides positional args)\n", "-i, --input", "[FILE]");
     std::fprintf(stderr, "\t%-18s%-10soutput prefix path\n", "-o, --output", "[arg]");
@@ -384,7 +389,7 @@ int mumemto_build_usage() {
     std::fprintf(stderr, "\t%-28swrite LCP, BWT, and SA to file\n\n", "-A, --arrays-out");
     std::fprintf(stderr, "\t%-18s%-10scompute matches from precomputed LCP, BWT, SA (with shared PREFIX.bwt/sa/lcp)\n\n", "-a, --arrays-in", "[PREFIX]");
 
-    std::fprintf(stderr, "\t%-18s%-10sfind multi-MUMs or multi-MEMs in at least N - k genomes\n\t%-28s(default: 0, match must occur in all sequences, i.e. strict multi-MUM/MEM)\n\n", "-k, --missing-genomes", "[INT]", "");
+    std::fprintf(stderr, "\t%-18s%-10sfind matches in at least k sequences. k < 0 sets the  sequences relative to N, i.e. matches must occur in at least N - |k| sequences.\n\t%-28s(default: 0, match must occur in all sequences, i.e. strict multi-MUM/MEM)\n\n", "-k, --minimum-genomes", "[INT]", "");
     std::fprintf(stderr, "MUM mode options:\n");
     std::fprintf(stderr, "\t%-28soutput subset multi-MUMs that overlap shorter, more complete multi-MUMs (default: true w/ -k)\n", "-p, --no-overlap");
     
