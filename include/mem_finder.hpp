@@ -268,7 +268,7 @@ private:
         size_t iterations = end - start + 1;
         size_t idx = 0;
         std::deque<size_t>::iterator it = da_buffer.begin() + (start - buffer_start);
-        uint8_t cur_char = *it;
+        size_t cur_char = *it;
         while (idx < iterations) {
             if (!seen.count(*it)) {
                 unique++;

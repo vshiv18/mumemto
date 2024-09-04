@@ -72,7 +72,7 @@ public:
     template <class T>
     size_t process(T &match_finder) {
         size_t count;
-        for (size_t j = 0; j < ref_build->total_length; j++)
+        for (auto j = 0; j < ref_build->total_length; j++)
         {    
             if (j % (ref_build->total_length / PBWIDTH) == 0)
                         printProgress((double) j / ref_build->total_length);
