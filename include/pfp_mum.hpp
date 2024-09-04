@@ -58,7 +58,7 @@ struct BuildOptions {
         std::string output_prefix = "output";
         std::string output_ref = "";
         std::vector<std::string> files;
-        bool use_rcomp = false;
+        bool use_rcomp = true;
         size_t pfp_w = 10;
         size_t hash_mod = 100;
         // size_t threads = 0;

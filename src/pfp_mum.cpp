@@ -350,7 +350,7 @@ void parse_build_options(int argc, char** argv, BuildOptions* opts) {
             case 'i': opts->input_list.assign(optarg); break;
             case 'o': opts->output_prefix.assign(optarg); break;
             case 'w': opts->pfp_w = std::atoi(optarg); break;
-            case 'r': opts->use_rcomp = true; break;
+            case 'r': opts->use_rcomp = false; break;
             case 'p': opts->overlap = false; break;
             case 'k': opts->missing_genomes = std::atoi(optarg); break;
             case 'm': opts->hash_mod = std::atoi(optarg); break;
@@ -379,7 +379,7 @@ int mumemto_build_usage() {
     std::fprintf(stderr, "\t%-28sprints this usage message\n", "-h, --help");
     std::fprintf(stderr, "\t%-18s%-10spath to a file-list of genomes to use (overrides positional args)\n", "-i, --input", "[FILE]");
     std::fprintf(stderr, "\t%-18s%-10soutput prefix path\n", "-o, --output", "[arg]");
-    std::fprintf(stderr, "\t%-28sinclude the reverse-complement of sequence (default: false)\n\n", "-r, --revcomp");
+    std::fprintf(stderr, "\t%-28sinclude the reverse complement of the sequences (default: true)\n\n", "-r, --no-revcomp");
     std::fprintf(stderr, "\t%-18s%-10sminimum MUM or MEM length (default: 20)\n\n", "-l, --min-match-len", "[INT]");
     std::fprintf(stderr, "\t%-28swrite LCP, BWT, and SA to file\n\n", "-A, --arrays-out");
     std::fprintf(stderr, "\t%-18s%-10scompute matches from precomputed LCP, BWT, SA (with shared PREFIX.bwt/sa/lcp)\n\n", "-a, --arrays-in", "[PREFIX]");
