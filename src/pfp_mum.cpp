@@ -28,7 +28,7 @@
 
 int build_main(int argc, char** argv) {
     /* main method for finding matches */
-    if (argc == 1) return mumemto_build_usage();
+    if (argc == 1) return mumemto_short_usage();
 
     // grab the command-line options, and validate them
     BuildOptions build_opts;
@@ -308,13 +308,13 @@ void parse_build_options(int argc, char** argv, BuildOptions* opts) {
         {"arrays-in",   required_argument, NULL,  'a'},
         {"keep-temp-files",   no_argument, NULL,  'K'},
         {"window",   required_argument, NULL,  'w'},
-        {"rare",   required_argument, NULL,  'x'},
+        {"rare",   required_argument, NULL,  'f'},
         {0, 0, 0,  0}
     };
     int c = 0;
     int long_index = 0;
     
-    while ((c = getopt_long(argc, argv, "hi:F:o:w:sl:ra:AKk:p:m:x:", long_options, &long_index)) >= 0) {
+    while ((c = getopt_long(argc, argv, "hi:F:o:w:sl:ra:AKk:p:m:f:", long_options, &long_index)) >= 0) {
         switch(c) {
             case 'h': mumemto_build_usage(); std::exit(1);
             case 'i': opts->input_list.assign(optarg); break;
@@ -322,7 +322,7 @@ void parse_build_options(int argc, char** argv, BuildOptions* opts) {
             case 'w': opts->pfp_w = std::atoi(optarg); break;
             case 'r': opts->use_rcomp = false; break;
             case 's': opts->overlap = false; break;
-            case 'k': opts->missing_genomes = std::atoi(optarg); break;
+            case 'k': opts->num_distinct_docs = std::atoi(optarg); break;
             case 'm': opts->hash_mod = std::atoi(optarg); break;
             case 'p': opts->from_parse = true; break;
             case 'l': opts->min_match_len = std::atoi(optarg); break;
@@ -330,7 +330,7 @@ void parse_build_options(int argc, char** argv, BuildOptions* opts) {
             case 'A': opts->arrays_out = true; break;
             case 'a': opts->arrays_in.assign(optarg); break;
             case 'K': opts->keep_temp = true; break;
-            case 'x': opts->rare_freq = std::atoi(optarg); break;
+            case 'f': opts->rare_freq = std::atoi(optarg); break;
             default: mumemto_build_usage(); std::exit(1);
         }
     }
@@ -340,7 +340,7 @@ void parse_build_options(int argc, char** argv, BuildOptions* opts) {
     }
 }
 
-int mumemto_build_usage() {
+int mumemto_usage() {
     /* prints out the usage information for the build method */
     std::fprintf(stderr, "\nmumemto - find maximal [unique | exact] matches using PFP.\n");
     std::fprintf(stderr, "Usage: mumemto [mum | mem] [options] [input_fasta [...]]\n\n");
@@ -385,38 +385,25 @@ int mumemto_build_usage() {
     return 0;
 }
 
-int mumemto_usage() {
+int mumemto_short_usage() {
     /* Prints the usage information for mumemto */
     std::fprintf(stderr, "\nmumemto - find maximal [unique | exact] matches using PFP.\n");
-    std::fprintf(stderr, "Usage: mumemto [mum | mem] [options] [input_fasta [...]]\n\n");
-
-    std::fprintf(stderr, "\nmumemto has different modes to run:\n");
-    std::fprintf(stderr, "\tmum\tcomputes maximal unique matches (MUMs) in the collection of sequences\n");
-    std::fprintf(stderr, "\tmem\tcomputes maximal exact matches (MEMs) in the collection of sequences\n");
+    std::fprintf(stderr, "Usage: mumemto [options] [input_fasta [...]]\n\n");
+    std::fprintf(stderr, "\t%-28sprints detailed usage message\n", "-h, --help");
     return 0;
 }
 
 int main(int argc, char** argv) {
     /* main method for mumemto */
     std::fprintf(stderr, "\033[1m\033[31m\nmumemto version: %s\033[m\033[0m\n", PFPMUM_VERSION);
-    bool mum_mode;
     if (argc > 1) {
-        if (std::strcmp(argv[1], "mum") == 0)
-            mum_mode = true;
-        else if (std::strcmp(argv[1], "mem") == 0)
-            mum_mode = false;
-        else if (std::strcmp(argv[1], "mori") == 0)
+        if (std::strcmp(argv[1], "mori") == 0)
         {
             std::fprintf(stdout, "\033[1m\033[31m\nDeath is inevitable.\033[m\033[0m\n");
             std::fprintf(stdout, SKULL.c_str());
             return 0;
         }
-        else
-        {
-            std::fprintf(stderr, "\nOne of [mum | mem] mode selection required!\n");
-            return mumemto_usage();
-        }
-        return build_main(argc-1, argv+1, mum_mode);
+        return build_main(argc, argv);
     }
-    return mumemto_usage();
+    return mumemto_short_usage();
 }

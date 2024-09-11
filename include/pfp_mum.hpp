@@ -29,7 +29,7 @@
                                   std::fprintf(stderr, "\n");} while (0)
 
 // Defintions
-#define PFPMUM_VERSION "1.0.0"
+#define PFPMUM_VERSION "1.1.0"
 
 #define MAXLCPVALUE 65535 // 2^16 - 1
 #define MAXDOCS 65535
