@@ -231,7 +231,7 @@ private:
                     return true;
             } else {
                 // seen[cur_doc]++;
-                if ((++seen[cur_doc]) > max_doc_freq)
+                if (max_doc_freq && (++seen[cur_doc]) > max_doc_freq)
                     return false;
             }
             it++;
