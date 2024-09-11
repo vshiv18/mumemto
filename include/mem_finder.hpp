@@ -181,7 +181,7 @@ protected:
 
 private:    
 
-    inline size_t update_mems(size_t j, size_t lcp)
+    virtual size_t update_mems(size_t j, size_t lcp)
     {
         // three cases for LCP, increase, decrease, or stagnant (nothing changes)
         // j = idx in SA
@@ -209,7 +209,7 @@ private:
         return count;
     }
 
-    inline bool check_doc_range(size_t start, size_t end) 
+    virtual bool check_doc_range(size_t start, size_t end) 
     {
         std::unordered_set<size_t> seen;
         size_t unique = 0;
