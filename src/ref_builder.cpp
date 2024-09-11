@@ -3,8 +3,8 @@
  * Description: Implementation of RefBuilder class which builds
  *              input reference file and determine the number of
  *              bp in each class.
- * Note: this is based on the ref_builder.cpp in the SPUMONI repo.
- * Author: Omar Ahmed
+ * Note: this is based on the ref_builder.cpp in the SPUMONI repo (written by Omar Ahmed).
+ * Author: Vikram Shivakumar
  * Date: August 31, 2022
  */
 
@@ -48,7 +48,7 @@ void rev_comp(std::string &seq) {
 }
 
 RefBuilder::RefBuilder(std::string input_data, std::string output_prefix, 
-                        bool use_rcomp): input_file(input_data), use_revcomp(use_rcomp) {
+                        bool use_rcomp): input_file(input_data), use_revcomp(use_rcomp), output_prefix(output_prefix) {
     /* Constructor of RefBuilder - builds input reference and determines size of each class */
 
     // Verify every file in the filelist is valid
@@ -56,8 +56,6 @@ RefBuilder::RefBuilder(std::string input_data, std::string output_prefix,
     size_t curr_id = 0, member_num = 0;
 
     std::ifstream input_fd (input_file.data(), std::ifstream::in);
-    std::vector<std::string> input_files;
-    std::vector<size_t> document_ids;
 
     while (std::getline(input_fd, line)) {
         auto word_list = split(line, ' ');
@@ -90,8 +88,11 @@ RefBuilder::RefBuilder(std::string input_data, std::string output_prefix,
     if (document_ids.back() == 1) {
         FATAL_ERROR("Multiple FASTA inputs required. Perhaps split a multi-FASTA into multiple files?");}
 
+    this->num_docs = curr_id;
+}
+void RefBuilder::build_input_file() {
     // Declare needed parameters for reading/writing
-    output_ref = output_prefix + ".fna";
+    output_ref = this->output_prefix + ".fna";
     std::ofstream output_fd (output_ref.data(), std::ofstream::out);
     FILE* fp; kseq_t* seq;
     std::vector<std::string> seq_vec;
@@ -99,7 +100,7 @@ RefBuilder::RefBuilder(std::string input_data, std::string output_prefix,
     // std::vector<size_t> seq_lengths;
 
     // Start working on building the reference file by reading each file ...
-    curr_id = 1;
+    size_t curr_id = 1;
     size_t curr_id_seq_length = 0;
     for (auto iter = input_files.begin(); iter != input_files.end(); ++iter) {
         fp = fopen((*iter).data(), "r"); 
@@ -155,7 +156,9 @@ RefBuilder::RefBuilder(std::string input_data, std::string output_prefix,
     }
 
     this->total_length = total_input_length;
-    this->num_docs = seq_lengths.size();
+    // sanity check
+    ASSERT((this->num_docs == seq_lengths.size()), "Issue with file-list parsing occurred.");
+    // this->num_docs = seq_lengths.size();
     
     // Build bitvector/rank support marking the end of each document
     doc_ends = sdsl::bit_vector(total_input_length, 0);

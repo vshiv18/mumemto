@@ -26,7 +26,7 @@
 #include <queue>
 #include <read_arrays.hpp>
 
-int build_main(int argc, char** argv, bool mum_mode) {
+int build_main(int argc, char** argv) {
     /* main method for finding matches */
     if (argc == 1) return mumemto_build_usage();
 
@@ -34,18 +34,25 @@ int build_main(int argc, char** argv, bool mum_mode) {
     BuildOptions build_opts;
     parse_build_options(argc, argv, &build_opts);
     // print_build_status_info(&build_opts);
-    build_opts.validate();
+    bool mum_mode = build_opts.validate();
 
-    // determine output path for reference, and print all info
+    // determine output path for reference, generate and store filelist
     build_opts.output_ref.assign(build_opts.output_prefix + ".fna");
-    print_build_status_info(&build_opts, mum_mode);
 
     if (build_opts.input_list.length() == 0) {build_opts.input_list = make_filelist(build_opts.files, build_opts.output_prefix);}
+
+    RefBuilder ref_build(build_opts.input_list, build_opts.output_prefix, build_opts.use_rcomp);
+
+    // normalize and reconcile the input parameters
+    build_opts.set_parameters(ref_build.num_docs, mum_mode);
+
+    // print parameters and begin pipeline
+    print_build_status_info(build_opts, ref_build, mum_mode);
+
     // Build the input reference file, and bitvector labeling the end for each doc
     STATUS_LOG("build_main", "building the reference file based on file-list");
     auto start = std::chrono::system_clock::now();
-    
-    RefBuilder ref_build(build_opts.input_list, build_opts.output_prefix, build_opts.use_rcomp);
+    ref_build.build_input_file();
     DONE_LOG((std::chrono::system_clock::now() - start));
 
     // Make sure that document numbers can be store in 2 bytes
@@ -66,41 +73,16 @@ int build_main(int argc, char** argv, bool mum_mode) {
     helper_bins.build_paths((path / "bin/").string());
     helper_bins.validate();
 
-    if (build_opts.missing_genomes < 0)
-        build_opts.missing_genomes = build_opts.missing_genomes * -1;
-    else if (build_opts.missing_genomes > 0)
-        build_opts.missing_genomes = ref_build.num_docs - build_opts.missing_genomes;
-    if (build_opts.missing_genomes >= ref_build.num_docs - 1)
-    {
-        std::string match_type = mum_mode ? "MUMs" : "MEMs";
-        std::string message = "Too few number of sequences, defaulting to multi-" + match_type + " in 2 or more sequences";
-        FORCE_LOG("build_main", message.c_str());
-        build_opts.missing_genomes = ref_build.num_docs - 2;
-    }
-
     // just read from files if provided
     if (build_opts.arrays_in.length() > 0) {
         file_lcp input_lcp(build_opts.arrays_in, &ref_build);
         start = std::chrono::system_clock::now();
-        if (mum_mode){
-            STATUS_LOG("build_main", "finding multi-MUMs from pfp\n");
-            mum_finder match_finder(build_opts.output_prefix, &ref_build, build_opts.min_match_len, build_opts.missing_genomes + 1, build_opts.overlap);
-            input_lcp.process(match_finder);
-            match_finder.close();
-        }
-        else {
-            STATUS_LOG("build_main", "finding multi-MEMs from pfp");
-            mem_finder match_finder(build_opts.output_prefix, &ref_build, build_opts.min_match_len, ref_build.num_docs - build_opts.missing_genomes, build_opts.max_mem_freq);
-            input_lcp.process(match_finder);
-            match_finder.close();
-        }
-
+        STATUS_LOG("build_main", "finding multi-%ss from pfp", mum_mode ? "MUM" : "MEM");
+        mem_finder match_finder(build_opts.output_prefix, ref_build, build_opts.min_match_len, build_opts.num_distinct_docs, build_opts.rare_freq, build_opts.max_mem_freq);
+        input_lcp.process(match_finder);
+        match_finder.close();
         input_lcp.close();
 
-        if (mum_mode)
-            FORCE_LOG("build_main", "finding multi-MUMs from pfp");
-        else
-            FORCE_LOG("build_main", "finding multi-MEMs from pfp");
         DONE_LOG((std::chrono::system_clock::now() - start));
 
         FORCE_LOG("build_main", "finished computing matches");
@@ -130,25 +112,11 @@ int build_main(int argc, char** argv, bool mum_mode) {
     pfp_lcp lcp(pf, build_opts.output_prefix, &ref_build, build_opts.arrays_out);
     size_t count = 0;
 
-    if (build_opts.rare_freq > 1){
-        STATUS_LOG("build_main", "finding rare multi-MEMs from pfp");
-        rare_mem_finder match_finder(build_opts.output_prefix, &ref_build, build_opts.min_match_len, ref_build.num_docs - build_opts.missing_genomes, build_opts.rare_freq);
-        count = lcp.process(match_finder);
-        match_finder.close();
-    }
-    else if (mum_mode){
-        STATUS_LOG("build_main", "finding multi-MUMs from pfp");
-        mum_finder match_finder(build_opts.output_prefix, &ref_build, build_opts.min_match_len, build_opts.missing_genomes + 1, build_opts.overlap);
-        count = lcp.process(match_finder);
-        match_finder.close();
-    }
-    else {
-        STATUS_LOG("build_main", "finding multi-MEMs from pfp");
-        mem_finder match_finder(build_opts.output_prefix, &ref_build, build_opts.min_match_len, ref_build.num_docs - build_opts.missing_genomes, build_opts.max_mem_freq);
-        count = lcp.process(match_finder);
-        match_finder.close();
-    }
-
+    STATUS_LOG("build_main", "finding multi-%ss from pfp", mum_mode ? "MUM" : "MEM");
+    // std::string filename, RefBuilder& ref_build, size_t min_mem_len, size_t num_distinct, int max_doc_freq, int max_total_freq
+    mem_finder match_finder(build_opts.output_prefix, ref_build, build_opts.min_match_len, build_opts.num_distinct_docs, build_opts.rare_freq, build_opts.max_mem_freq);
+    count = lcp.process(match_finder);
+    match_finder.close();
     lcp.close();
     
     auto sec = std::chrono::duration<double>((std::chrono::system_clock::now() - start)); std::fprintf(stderr, " done.  (%.3f sec)\n", sec.count());
@@ -263,46 +231,44 @@ int is_dir(std::string path) {
     return std::filesystem::exists(path);
 }
 
-void print_build_status_info(BuildOptions* opts, bool mum_mode) {
+void print_build_status_info(BuildOptions& opts, RefBuilder& ref_build, bool mum_mode) {
     /* prints out the information being used in the current run */
     std::fprintf(stderr, "\nOverview of Parameters:\n");
-    if (opts->input_list.length())
-        std::fprintf(stderr, "\tInput file-list: %s\n", opts->input_list.data());
-    else if (opts->files.size() > 5) {
+    if (opts.input_list.length())
+        std::fprintf(stderr, "\tInput file-list: %s\n", opts.input_list.data());
+    else if (opts.files.size() > 5) {
         std::fprintf(stderr, "\tInput files: ");
-        std::fprintf(stderr, "%s,", opts->files.at(0).data());
-        std::fprintf(stderr, "%s,", opts->files.at(1).data());
-        std::fprintf(stderr, " ... ,", opts->files.at(1).data());
-        std::fprintf(stderr, "%s,", opts->files.at(opts->files.size() - 2).data());
-        std::fprintf(stderr, "%s\n", opts->files.at(opts->files.size() - 1).data());
+        std::fprintf(stderr, "%s,", opts.files.at(0).data());
+        std::fprintf(stderr, "%s,", opts.files.at(1).data());
+        std::fprintf(stderr, " ... ,", opts.files.at(1).data());
+        std::fprintf(stderr, "%s,", opts.files.at(opts.files.size() - 2).data());
+        std::fprintf(stderr, "%s\n", opts.files.at(opts.files.size() - 1).data());
     }
     else {
         std::fprintf(stderr, "\tInput files: ");
-        for (int i = 0; i < opts->files.size() - 1; i++)
+        for (int i = 0; i < opts.files.size() - 1; i++)
             {
-                std::fprintf(stderr, "%s,", opts->files.at(i).data());
+                std::fprintf(stderr, "%s,", opts.files.at(i).data());
             }
-            std::fprintf(stderr, "%s\n", opts->files.at(opts->files.size() - 1).data());
+            std::fprintf(stderr, "%s\n", opts.files.at(opts.files.size() - 1).data());
     }
     std::string match_type = mum_mode ? "MUM" : "MEM";
-    std::fprintf(stderr, "\tOutput ref path: %s\n", opts->output_ref.data());
-    if (opts->arrays_in.length() > 0)
-        std::fprintf(stderr, "\tUsing pre-computed LCP/BWT/SA arrays from files with prefix: %s\n", opts->arrays_in.data());
+    std::fprintf(stderr, "\tOutput ref path: %s\n", opts.output_ref.data());
+    if (opts.arrays_in.length() > 0)
+        std::fprintf(stderr, "\tUsing pre-computed LCP/BWT/SA arrays from files with prefix: %s\n", opts.arrays_in.data());
     else 
-        std::fprintf(stderr, "\tPFP window size: %d\n", opts->pfp_w);
-    if (opts->arrays_out) {std::fprintf(stderr, "\tWriting LCP, BWT and suffix arrays\n");}
-    std::fprintf(stderr, "\tMinimum %s length: %d\n", match_type.data(), opts->min_match_len);
-    std::fprintf(stderr, "\tInclude reverse complement?: %d\n", opts->use_rcomp);
-    if (opts->missing_genomes == 0)
-        std::fprintf(stderr, "\tfinding multi-%ss present in all genomes\n", match_type.data(), opts->missing_genomes);
+        std::fprintf(stderr, "\tPFP window size: %d\n", opts.pfp_w);
+    if (opts.arrays_out) {std::fprintf(stderr, "\tWriting LCP, BWT and suffix arrays\n");}
+    std::fprintf(stderr, "\tMinimum %s length: %d\n", match_type.data(), opts.min_match_len);
+    std::fprintf(stderr, "\tInclude reverse complement?: %d\n", opts.use_rcomp);
+    if (opts.num_distinct_docs == ref_build.num_docs)
+        std::fprintf(stderr, "\tfinding multi-%ss present in all genomes\n", match_type.data());
     else
-        std::fprintf(stderr, "\tfinding multi-%ss present in N - %d genomes\n", match_type.data(), opts->missing_genomes);
-    if (!mum_mode && opts->max_mem_freq >= 0)
-        std::fprintf(stderr, "\t\t- excluding multi-MEMs that occur more than N + %d times\n", opts->max_mem_freq);
-    if (!mum_mode && opts->rare_freq > 1)
-        std::fprintf(stderr, "\t\t- only finding rare multi-MEMs, that occur at most %d times in each sequence\n", opts->rare_freq);
-    if (opts->overlap && opts->missing_genomes > 0 && mum_mode)
-        std::fprintf(stderr, "\t\t- including overlapping multi-MUMs\n");
+        std::fprintf(stderr, "\tfinding multi-%ss present in %d genomes\n", match_type.data(), opts.num_distinct_docs);
+    if (opts.max_mem_freq > 0)
+        std::fprintf(stderr, "\t\t- excluding multi-MEMs that occur more than %d times\n", opts.max_mem_freq);
+    if (opts.rare_freq > 1)
+        std::fprintf(stderr, "\t\t- only finding rare multi-MEMs, that occur at most %d times in each sequence\n", opts.rare_freq);
 }
 
 std::string make_filelist(std::vector<std::string> files, std::string output_prefix) {

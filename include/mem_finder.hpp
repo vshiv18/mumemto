@@ -34,22 +34,25 @@
 class mem_finder{
 public:
 
-    size_t MIN_MEM_LENGTH;
-    size_t NUM_DISTINCT;
-    int MAX_FREQ;
+    size_t min_mem_length;
+    size_t num_distinct;
+    int max_freq;
+    int max_doc_freq;
     bool no_max_freq;
     size_t num_docs = 0;
     std::vector<size_t> doc_offsets;
     std::vector<size_t> doc_lens;
     bool revcomp;
 
-    mem_finder(std::string filename, RefBuilder* ref_build, size_t min_mem_len, size_t num_distinct, int max_freq): 
-                MIN_MEM_LENGTH(min_mem_len),
-                num_docs(ref_build->num_docs),
-                revcomp(ref_build->use_revcomp),
-                doc_lens(ref_build->seq_lengths),
-                NUM_DISTINCT(num_distinct),
-                doc_offsets(num_docs, 0)
+    mem_finder(std::string filename, RefBuilder& ref_build, size_t min_mem_len, size_t num_distinct, int max_doc_freq, int max_total_freq): 
+                min_mem_length(min_mem_len),
+                num_docs(ref_build.num_docs),
+                revcomp(ref_build.use_revcomp),
+                doc_lens(ref_build.seq_lengths),
+                num_distinct(num_distinct),
+                doc_offsets(num_docs, 0),
+                max_freq(max_total_freq),
+                max_doc_freq(max_doc_freq)
     {
         // get cumulative offset
         size_t curr_sum = 0;
@@ -65,9 +68,9 @@ public:
         // Initialize stack
         current_mems.push_back(std::make_pair(0, 0));
         
-        this->MAX_FREQ = num_docs + max_freq;
-        this->no_max_freq = max_freq == -1;
-        //std::numeric_limits<size_t>::max()
+        // Set parameters and limits
+        this->max_freq = num_docs + max_freq;
+        this->no_max_freq = max_freq == 0;
 
         // Opening output file
         std::string outfile = filename + std::string(".mems");
@@ -191,10 +194,13 @@ private:
         while (lcp < current_mems.back().second) {
             interval = current_mems.back();
             current_mems.pop_back();
-            if (interval.second >= MIN_MEM_LENGTH && 
-                j - interval.first >= NUM_DISTINCT && 
-                (no_max_freq || j - interval.first <= MAX_FREQ) &&
-                !check_bwt_range(interval.first, j-1) && check_doc_range(interval.first, j-1)) {
+            // check conditions of MEM/MUM
+            if (interval.second >= min_mem_length && 
+                j - interval.first >= num_distinct && 
+                (no_max_freq || j - interval.first <= max_freq) &&
+                !check_bwt_range(interval.first, j-1) && 
+                check_doc_range(interval.first, j-1)) 
+                {
                     write_mem(interval.second, interval.first, j - 1);
                     count++;
                 }
@@ -202,27 +208,31 @@ private:
         }
 
         if (lcp > current_mems.back().second) {
-            if (lcp >= MIN_MEM_LENGTH)
+            if (lcp >= min_mem_length)
                 current_mems.push_back(std::make_pair(start, lcp));
         }
 
         return count;
     }
 
-    virtual bool check_doc_range(size_t start, size_t end) 
+    inline bool check_doc_range(size_t start, size_t end) 
     {
-        std::unordered_set<size_t> seen;
+        std::unordered_map<size_t, size_t> seen;
         size_t unique = 0;
         size_t iterations = end - start + 1;
         size_t idx = 0;
         std::deque<size_t>::iterator it = da_buffer.begin() + (start - buffer_start);
-        size_t cur_char = *it;
+        size_t cur_doc = *it;
         while (idx < iterations) {
-            if (!seen.count(*it)) {
+            if (!seen.count(cur_doc)) {
                 unique++;
-                seen.insert(*it);
-                if (unique >= NUM_DISTINCT)
+                seen[cur_doc] = 1;
+                if (unique >= num_distinct)
                     return true;
+            } else {
+                // seen[cur_doc]++;
+                if ((++seen[cur_doc]) > max_doc_freq)
+                    return false;
             }
             it++;
             idx++;
@@ -254,111 +264,111 @@ private:
 
 
 
-class rare_mem_finder : public mem_finder {
-public:
-    rare_mem_finder(std::string filename, RefBuilder* ref_build, size_t min_mem_len, size_t num_distinct, int max_freq)
-        : mem_finder(filename, ref_build, min_mem_len, num_distinct, max_freq) {
-            this->MAX_FREQ = max_freq;
-        }
+// class rare_mem_finder : public mem_finder {
+// public:
+//     rare_mem_finder(std::string filename, RefBuilder* ref_build, size_t min_mem_len, size_t num_distinct, int max_freq)
+//         : mem_finder(filename, ref_build, min_mem_len, num_distinct, max_freq) {
+//             this->max_freq = max_freq;
+//         }
 
-private:
-    inline bool check_doc_range(size_t start, size_t end) {
-        std::unordered_map<size_t, size_t> seen;
-        size_t unique = 0;
-        size_t iterations = end - start + 1;
-        size_t idx = 0;
-        std::deque<size_t>::iterator it = da_buffer.begin() + (start - buffer_start);
-        size_t cur_char = *it;
-        while (idx < iterations) {
-            if (!seen.count(*it)) {
-                unique++;
-                seen[*it] = 1;
-                if (unique >= NUM_DISTINCT)
-                    return true;
-            } else {
-                seen[*it]++;
-                if (seen[*it] > MAX_FREQ)
-                    return false;
-            }
-            it++;
-            idx++;
-        }
-        return false;
-    }
+// private:
+//     inline bool check_doc_range(size_t start, size_t end) {
+//         std::unordered_map<size_t, size_t> seen;
+//         size_t unique = 0;
+//         size_t iterations = end - start + 1;
+//         size_t idx = 0;
+//         std::deque<size_t>::iterator it = da_buffer.begin() + (start - buffer_start);
+//         size_t cur_char = *it;
+//         while (idx < iterations) {
+//             if (!seen.count(*it)) {
+//                 unique++;
+//                 seen[*it] = 1;
+//                 if (unique >= num_distinct)
+//                     return true;
+//             } else {
+//                 seen[*it]++;
+//                 if (seen[*it] > max_freq)
+//                     return false;
+//             }
+//             it++;
+//             idx++;
+//         }
+//         return false;
+//     }
 
-    inline size_t update_mems(size_t j, size_t lcp) {
-        size_t count = 0;
-        size_t start = j - 1;
-        std::pair<size_t, size_t> interval;
-        while (lcp < current_mems.back().second) {
-            interval = current_mems.back();
-            current_mems.pop_back();
-            if (interval.second >= MIN_MEM_LENGTH && 
-                j - interval.first >= NUM_DISTINCT && 
-                (j - interval.first <= (NUM_DISTINCT * MAX_FREQ)) &&
-                !check_bwt_range(interval.first, j-1) && check_doc_range(interval.first, j-1)) {
-                    write_mem(interval.second, interval.first, j - 1);
-                    count++;
-                }
-            start = interval.first;
-        }
+//     inline size_t update_mems(size_t j, size_t lcp) {
+//         size_t count = 0;
+//         size_t start = j - 1;
+//         std::pair<size_t, size_t> interval;
+//         while (lcp < current_mems.back().second) {
+//             interval = current_mems.back();
+//             current_mems.pop_back();
+//             if (interval.second >= min_mem_length && 
+//                 j - interval.first >= num_distinct && 
+//                 (j - interval.first <= (num_distinct * max_freq)) &&
+//                 !check_bwt_range(interval.first, j-1) && check_doc_range(interval.first, j-1)) {
+//                     write_mem(interval.second, interval.first, j - 1);
+//                     count++;
+//                 }
+//             start = interval.first;
+//         }
 
-        if (lcp > current_mems.back().second) {
-            if (lcp >= MIN_MEM_LENGTH)
-                current_mems.push_back(std::make_pair(start, lcp));
-        }
+//         if (lcp > current_mems.back().second) {
+//             if (lcp >= min_mem_length)
+//                 current_mems.push_back(std::make_pair(start, lcp));
+//         }
 
-        return count;
-    }
-};
+//         return count;
+//     }
+// };
 
 
-class partial_mum_finder : public mem_finder {
-public:
-    partial_mum_finder(std::string filename, RefBuilder* ref_build, size_t min_mem_len, size_t num_distinct)
-        : mem_finder(filename, ref_build, min_mem_len, num_distinct, 0) {}
+// class partial_mum_finder : public mem_finder {
+// public:
+//     partial_mum_finder(std::string filename, RefBuilder* ref_build, size_t min_mem_len, size_t num_distinct)
+//         : mem_finder(filename, ref_build, min_mem_len, num_distinct, 0) {}
 
-private:
-    inline bool check_doc_range(size_t start, size_t end) {
-        std::unordered_set<size_t> seen;
-        size_t iterations = end - start + 1;
-        size_t idx = 0;
-        std::deque<size_t>::iterator it = da_buffer.begin() + (start - buffer_start);
-        while (idx < iterations) {
-            if (!seen.count(*it))
-                seen.insert(*it);
-            else
-                return false;
-            it++;
-            idx++;
-        }
-        return true;
-    }
+// private:
+//     inline bool check_doc_range(size_t start, size_t end) {
+//         std::unordered_set<size_t> seen;
+//         size_t iterations = end - start + 1;
+//         size_t idx = 0;
+//         std::deque<size_t>::iterator it = da_buffer.begin() + (start - buffer_start);
+//         while (idx < iterations) {
+//             if (!seen.count(*it))
+//                 seen.insert(*it);
+//             else
+//                 return false;
+//             it++;
+//             idx++;
+//         }
+//         return true;
+//     }
 
-    inline size_t update_mems(size_t j, size_t lcp) {
-        size_t count = 0;
-        size_t start = j - 1;
-        std::pair<size_t, size_t> interval;
-        while (lcp < current_mems.back().second) {
-            interval = current_mems.back();
-            current_mems.pop_back();
-            if (interval.second >= MIN_MEM_LENGTH && 
-                j - interval.first >= NUM_DISTINCT && 
-                (j - interval.first <= num_docs) &&
-                !check_bwt_range(interval.first, j-1) && check_doc_range(interval.first, j-1)) {
-                    write_mem(interval.second, interval.first, j - 1);
-                    count++;
-                }
-            start = interval.first;
-        }
+//     inline size_t update_mems(size_t j, size_t lcp) {
+//         size_t count = 0;
+//         size_t start = j - 1;
+//         std::pair<size_t, size_t> interval;
+//         while (lcp < current_mems.back().second) {
+//             interval = current_mems.back();
+//             current_mems.pop_back();
+//             if (interval.second >= min_mem_length && 
+//                 j - interval.first >= num_distinct && 
+//                 (j - interval.first <= num_docs) &&
+//                 !check_bwt_range(interval.first, j-1) && check_doc_range(interval.first, j-1)) {
+//                     write_mem(interval.second, interval.first, j - 1);
+//                     count++;
+//                 }
+//             start = interval.first;
+//         }
 
-        if (lcp > current_mems.back().second) {
-            if (lcp >= MIN_MEM_LENGTH)
-                current_mems.push_back(std::make_pair(start, lcp));
-        }
+//         if (lcp > current_mems.back().second) {
+//             if (lcp >= min_mem_length)
+//                 current_mems.push_back(std::make_pair(start, lcp));
+//         }
 
-        return count;
-    }
-};
+//         return count;
+//     }
+// };
 
 #endif /* end of include guard: _MEM_HH */
