@@ -316,7 +316,7 @@ void parse_build_options(int argc, char** argv, BuildOptions* opts) {
     
     while ((c = getopt_long(argc, argv, "hi:F:o:w:sl:ra:AKk:p:m:f:", long_options, &long_index)) >= 0) {
         switch(c) {
-            case 'h': mumemto_build_usage(); std::exit(1);
+            case 'h': mumemto_usage(); std::exit(1);
             case 'i': opts->input_list.assign(optarg); break;
             case 'o': opts->output_prefix.assign(optarg); break;
             case 'w': opts->pfp_w = std::atoi(optarg); break;
@@ -331,7 +331,7 @@ void parse_build_options(int argc, char** argv, BuildOptions* opts) {
             case 'a': opts->arrays_in.assign(optarg); break;
             case 'K': opts->keep_temp = true; break;
             case 'f': opts->rare_freq = std::atoi(optarg); break;
-            default: mumemto_build_usage(); std::exit(1);
+            default: mumemto_usage(); std::exit(1);
         }
     }
 
@@ -344,29 +344,28 @@ int mumemto_usage() {
     /* prints out the usage information for the build method */
     std::fprintf(stderr, "\nmumemto - find maximal [unique | exact] matches using PFP.\n");
     std::fprintf(stderr, "Usage: mumemto [mum | mem] [options] [input_fasta [...]]\n\n");
-
-    std::fprintf(stderr, "I/O options:\n");
     std::fprintf(stderr, "*** for all options, N = # of sequences ***\n");
-    std::fprintf(stderr, "\t%-28sprints this usage message\n", "-h, --help");
-    std::fprintf(stderr, "\t%-18s%-10spath to a file-list of genomes to use (overrides positional args)\n", "-i, --input", "[FILE]");
-    std::fprintf(stderr, "\t%-18s%-10soutput prefix path\n", "-o, --output", "[arg]");
-    std::fprintf(stderr, "\t%-28sinclude the reverse complement of the sequences (default: true)\n\n", "-r, --no-revcomp");
+    std::fprintf(stderr, "I/O options:\n");
+    std::fprintf(stderr, "\t%-32sprints this usage message\n", "-h, --help");
+    std::fprintf(stderr, "\t%-22s%-10spath to a file-list of genomes to use (overrides positional args)\n", "-i, --input", "[FILE]");
+    std::fprintf(stderr, "\t%-22s%-10soutput prefix path\n", "-o, --output", "[arg]");
+    std::fprintf(stderr, "\t%-32sinclude the reverse complement of the sequences (default: true)\n\n", "-r, --no-revcomp");
     
-    std::fprintf(stderr, "\t%-28swrite LCP, BWT, and SA to file\n\n", "-A, --arrays-out");
-    std::fprintf(stderr, "\t%-18s%-10scompute matches from precomputed LCP, BWT, SA (with shared PREFIX.bwt/sa/lcp)\n\n", "-a, --arrays-in", "[PREFIX]");
+    std::fprintf(stderr, "\t%-32swrite LCP, BWT, and SA to file\n", "-A, --arrays-out");
+    std::fprintf(stderr, "\t%-22s%-10scompute matches from precomputed LCP, BWT, SA (with shared PREFIX.bwt/sa/lcp)\n\n", "-a, --arrays-in", "[PREFIX]");
 
     std::fprintf(stderr, "Exact match parameters:\n");
-    std::fprintf(stderr, "\t%-18s%-10sminimum MUM or MEM length (default: 20)\n\n", "-l, --min-match-len", "[INT]");
-    std::fprintf(stderr, "\t%-18s%-10sfind matches in at least k sequences (k < 0 sets the  sequences relative to N, i.e. matches must occur in at least N - |k| sequences)\n\t%-28s(default: match occurs in all sequences, i.e. strict multi-MUM/MEM)\n\n", "-k, --minimum-genomes", "[INT]", "");
-    std::fprintf(stderr, "\t%-18s%-10smaximum number of occurences per sequence (set to 0 for no upper limit)\n\t%-28s(default: 1 (unique))\n", "-f, --per-seq-freq", "[INT]", "");
-    std::fprintf(stderr, "\t%-18s%-10smaximum number of total occurences of match (if negative, then relative to N) \n\t%-28s(default: no upper limit)\n", "-F, --max-total-freq","[INT]", "");
+    std::fprintf(stderr, "\t%-22s%-10sminimum MUM or MEM length (default: 20)\n\n", "-l, --min-match-len", "[INT]");
+    std::fprintf(stderr, "\t%-22s%-10sfind matches in at least k sequences (k < 0 sets the sequences relative to N, i.e. matches must occur in at least N - |k| sequences)\n\t%-32s(default: match occurs in all sequences, i.e. strict multi-MUM/MEM)\n\n", "-k, --minimum-genomes", "[INT]", "");
+    std::fprintf(stderr, "\t%-22s%-10smaximum number of occurences per sequence (set to 0 for no upper limit)\n\t%-32s(default: 1 [unique])\n\n", "-f, --per-seq-freq", "[INT]", "");
+    std::fprintf(stderr, "\t%-22s%-10smaximum number of total occurences of match (if negative, then relative to N) \n\t%-32s(default: no upper limit)\n\n", "-F, --max-total-freq","[INT]", "");
     
 
     std::fprintf(stderr, "PFP options:\n");
-    std::fprintf(stderr, "\t%-18s%-10swindow size used for pfp (default: 10)\n", "-w, --window", "[INT]");
-    std::fprintf(stderr, "\t%-18s%-10shash-modulus used for pfp (default: 100)\n\n", "-m, --modulus", "[INT]");
-    std::fprintf(stderr, "\t%-28suse pre-computed pf-parse\n\n", "-p, --from-parse");
-    std::fprintf(stderr, "\t%-28skeep PFP files\n\n", "-K, --keep-temp-files");
+    std::fprintf(stderr, "\t%-22s%-10swindow size used for pfp (default: 10)\n", "-w, --window", "[INT]");
+    std::fprintf(stderr, "\t%-22s%-10shash-modulus used for pfp (default: 100)\n", "-m, --modulus", "[INT]");
+    std::fprintf(stderr, "\t%-32suse pre-computed pf-parse\n", "-p, --from-parse");
+    std::fprintf(stderr, "\t%-32skeep PFP files\n\n", "-K, --keep-temp-files");
 
     std::fprintf(stderr, "Overview:\n");
         std::fprintf(stderr, "\tBy default, Mumemto computes multi-MUMs. Exact match parameters can be additionally tuned in three main ways:\n");
@@ -374,22 +373,18 @@ int mumemto_usage() {
         std::fprintf(stderr, "\t2) Choosing the maximum number of occurences in each genome [-f]\n");
         std::fprintf(stderr, "\t3) Choosing the total maximum number of occurences [-F]\n");
     std::fprintf(stderr, "Examples:\n");
-    std::fprintf(stderr, "Find all strict multi-MUMs across a collection: mumemto [OPTIONS] [input_fasta [...]] (equivalently -k 0 -f 1 -F 0)\n");
-    std::fprintf(stderr, "Find partial multi-MUMs in all sequences but one: mumemto -k -1 [OPTIONS] [input_fasta [...]]\n");
-    std::fprintf(stderr, "Find multi-MEMs that appear at most 3 times in each sequence: mumemto -f 3 [OPTIONS] [input_fasta [...]]\n");
-    std::fprintf(stderr, "Find all MEMs that appear at most 100 times within a collection: mumemto -f 0 -k 2 -F 100 [OPTIONS] [input_fasta [...]]\n");
-    //Note: -k 0 -F 0 will result in strict multi-MUMs
-    // std::fprintf(stderr, "MUM mode options:\n");
-    // std::fprintf(stderr, "\t%-28soutput subset multi-MUMs that overlap shorter, more complete multi-MUMs (default: true w/ -k)\n", "-s, --no-overlap");
-
+    std::fprintf(stderr, "\t - Find all strict multi-MUMs across a collection: mumemto [OPTIONS] [input_fasta [...]] (equivalently -k 0 -f 1 -F 0)\n");
+    std::fprintf(stderr, "\t - Find partial multi-MUMs in all sequences but one: mumemto -k -1 [OPTIONS] [input_fasta [...]]\n");
+    std::fprintf(stderr, "\t - Find multi-MEMs that appear at most 3 times in each sequence: mumemto -f 3 [OPTIONS] [input_fasta [...]]\n");
+    std::fprintf(stderr, "\t - Find all MEMs that appear at most 100 times within a collection: mumemto -f 0 -k 2 -F 100 [OPTIONS] [input_fasta [...]]\n");
     return 0;
 }
 
 int mumemto_short_usage() {
     /* Prints the usage information for mumemto */
     std::fprintf(stderr, "\nmumemto - find maximal [unique | exact] matches using PFP.\n");
-    std::fprintf(stderr, "Usage: mumemto [options] [input_fasta [...]]\n\n");
-    std::fprintf(stderr, "\t%-28sprints detailed usage message\n", "-h, --help");
+    std::fprintf(stderr, "Usage: mumemto [options] [input_fasta [...]]\n");
+    std::fprintf(stderr, "\t%-18sprints detailed usage message\n", "-h, --help");
     return 0;
 }
 

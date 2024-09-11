@@ -14,6 +14,7 @@
 #include <iostream>
 #include <filesystem>
 #include <vector>
+#include <ref_builder.hpp>
 
 /* Useful MACROs */
 #define FATAL_ERROR(...) do {std::fprintf(stderr, "\n\033[31mError: \033[m"); std::fprintf(stderr, __VA_ARGS__);\
@@ -40,8 +41,8 @@
 
 /* Function declations */
 int mumemto_usage();
-int build_main(int argc, char** argv, bool mum_mode);
-int mumemto_build_usage();
+int build_main(int argc, char** argv);
+int mumemto_short_usage();
 int is_file(std::string path);
 int is_dir(std::string path);
 std::string  make_filelist(std::vector<std::string> files, std::string output_prefix);
@@ -175,7 +176,7 @@ public:
 
 /* Function Declartions involving structs */
 void parse_build_options(int argc, char** argv, BuildOptions* opts);
-void print_build_status_info(BuildOptions* opts, bool mum_mode);
+void print_build_status_info(BuildOptions& opts, RefBuilder&ref_build, bool mum_mode);
 void run_build_parse_cmd(BuildOptions* build_opts, HelperPrograms* helper_bins);
 
 const std::string SKULL =
