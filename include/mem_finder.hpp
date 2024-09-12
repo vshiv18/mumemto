@@ -69,7 +69,7 @@ public:
         current_mems.push_back(std::make_pair(0, 0));
         
         // Set parameters and limits
-        this->max_freq = num_docs + max_freq;
+        // this->max_freq = num_docs + max_freq;
         this->no_max_freq = max_freq == 0;
 
         // Opening output file

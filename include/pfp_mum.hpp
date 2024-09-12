@@ -97,8 +97,8 @@ struct BuildOptions {
             else if (!is_dir(p.parent_path().string()))
                 FATAL_ERROR("Output path prefix is not in a valid directory."); 
 
-            if (max_mem_freq < -1)
-                FATAL_ERROR("Maximum MEM frequency cannot be negative (-1 indicates no limit on MEM frequency)"); 
+            // if (max_mem_freq < -1)
+            //     FATAL_ERROR("Maximum MEM frequency cannot be negative (-1 indicates no limit on MEM frequency)"); 
 
             if (rare_freq < 0)
                 FATAL_ERROR("Per-sequence MEM frequency must be > 0 (or 0 for no limit)."); 
