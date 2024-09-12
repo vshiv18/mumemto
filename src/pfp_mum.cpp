@@ -21,7 +21,7 @@
 #include <pfp.hpp>
 #include <pfp_lcp_mum.hpp>
 #include <mem_finder.hpp>
-#include <mum_finder.hpp>
+// #include <mum_finder.hpp>
 #include <getopt.h>
 #include <queue>
 #include <read_arrays.hpp>
