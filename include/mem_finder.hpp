@@ -184,7 +184,7 @@ protected:
 
 private:    
 
-    virtual size_t update_mems(size_t j, size_t lcp)
+    inline size_t update_mems(size_t j, size_t lcp)
     {
         // three cases for LCP, increase, decrease, or stagnant (nothing changes)
         // j = idx in SA
@@ -194,6 +194,7 @@ private:
         while (lcp < current_mems.back().second) {
             interval = current_mems.back();
             current_mems.pop_back();
+
             // check conditions of MEM/MUM
             if (interval.second >= min_mem_length && 
                 j - interval.first >= num_distinct && 
@@ -236,6 +237,7 @@ private:
             }
             it++;
             idx++;
+            cur_doc = *it;
         }
         return false;
     }
