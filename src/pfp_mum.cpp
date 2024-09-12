@@ -260,15 +260,15 @@ void print_build_status_info(BuildOptions& opts, RefBuilder& ref_build, bool mum
         std::fprintf(stderr, "\tPFP window size: %d\n", opts.pfp_w);
     if (opts.arrays_out) {std::fprintf(stderr, "\tWriting LCP, BWT and suffix arrays\n");}
     std::fprintf(stderr, "\tMinimum %s length: %d\n", match_type.data(), opts.min_match_len);
-    std::fprintf(stderr, "\tInclude reverse complement?: %d\n", opts.use_rcomp);
+    std::fprintf(stderr, "\tInclude reverse complement?: %s\n", opts.use_rcomp ? "True" : "False");
+    std::fprintf(stderr, "\tMax occurences per sequence: %d\n", opts.rare_freq);
+    if (opts.max_mem_freq > 0)
+        std::fprintf(stderr, "\t\t- excluding multi-MEMs that occur more than %d times in total\n", opts.max_mem_freq);
     if (opts.num_distinct_docs == ref_build.num_docs)
         std::fprintf(stderr, "\tfinding multi-%ss present in all genomes\n", match_type.data());
     else
         std::fprintf(stderr, "\tfinding multi-%ss present in %d genomes\n", match_type.data(), opts.num_distinct_docs);
-    if (opts.max_mem_freq > 0)
-        std::fprintf(stderr, "\t\t- excluding multi-MEMs that occur more than %d times\n", opts.max_mem_freq);
-    if (opts.rare_freq > 1)
-        std::fprintf(stderr, "\t\t- only finding rare multi-MEMs, that occur at most %d times in each sequence\n", opts.rare_freq);
+    std::fprintf(stderr, "\n");
 }
 
 std::string make_filelist(std::vector<std::string> files, std::string output_prefix) {
