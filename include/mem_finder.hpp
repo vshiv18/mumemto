@@ -228,8 +228,8 @@ private:
             if (!seen.count(cur_doc)) {
                 unique++;
                 seen[cur_doc] = 1;
-                if (unique >= num_distinct)
-                    return true;
+                // if (max_doc_freq == 0 && unique >= num_distinct)
+                //     return true;
             } else {
                 // seen[cur_doc]++;
                 if (max_doc_freq && (++seen[cur_doc]) > max_doc_freq)
@@ -239,7 +239,7 @@ private:
             idx++;
             cur_doc = *it;
         }
-        return false;
+        return unique >= num_distinct;
     }
 
     inline void update_buffers(size_t j, uint8_t bwt_c, size_t sa_pos, size_t lcp, size_t docid) {
