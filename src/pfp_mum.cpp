@@ -253,7 +253,7 @@ void print_build_status_info(BuildOptions& opts, RefBuilder& ref_build, bool mum
         std::fprintf(stderr, "\tInput file-list (N = %d): %s\n", ref_build.num_docs, opts.input_list.data());
 
     std::string match_type = mum_mode ? "MUM" : "MEM";
-    std::fprintf(stderr, "\tOutput ref path: %s\n", opts.output_ref.data());
+    std::fprintf(stderr, "\tOutput path: %s\n", opts.output_prefix.data());
     if (opts.arrays_in.length() > 0)
         std::fprintf(stderr, "\tUsing pre-computed LCP/BWT/SA arrays from files with prefix: %s\n", opts.arrays_in.data());
     else 

@@ -43,6 +43,7 @@ public:
     std::vector<size_t> doc_offsets;
     std::vector<size_t> doc_lens;
     bool revcomp;
+    bool mummode;
 
     mem_finder(std::string filename, RefBuilder& ref_build, size_t min_mem_len, size_t num_distinct, int max_doc_freq, int max_total_freq): 
                 min_mem_length(min_mem_len),
@@ -65,6 +66,7 @@ public:
                 doc_lens[i] = doc_lens[i] / 2;
             }
         }
+        this->mummode = (max_doc_freq == 1);
         // Initialize stack
         current_mems.push_back(std::make_pair(0, 0));
         
@@ -73,7 +75,7 @@ public:
         this->no_max_freq = max_freq == 0;
 
         // Opening output file
-        std::string outfile = filename + std::string(".mems");
+        std::string outfile = filename + (mummode ? std::string(".mums") : std::string(".mems"));
         mem_file.open(outfile);
     }
 
@@ -182,6 +184,56 @@ protected:
             mem_file << std::to_string(length) << '\t' << pos << '\t' << docs << '\t' << strand << std::endl;
     }
 
+    inline void write_mum(size_t length, size_t start, size_t end)
+    {
+        std::vector<size_t> offsets(num_docs, -1);
+        std::vector<char> strand(num_docs, 0);
+        size_t curpos;
+        size_t curdoc;
+        char curstrand;
+        std::string pos_string = "";
+        std::string strand_string = "";
+        for (size_t i = start; i <= end; i++)
+        {
+            curdoc = da_buffer.at(i - buffer_start);
+            curpos = sa_buffer.at(i - buffer_start) - doc_offsets[curdoc];
+            if (revcomp && curpos >= doc_lens[curdoc]) {
+                curstrand = '-';
+                curpos = curpos - doc_lens[curdoc];
+            }
+            else
+                curstrand = '+';
+
+            offsets[curdoc] = curpos;    
+            strand[curdoc] = curstrand;
+        }
+        // temporarory fix: only write MUMs where 1st genome is + stranded
+        if (strand[0] == '-')
+            return;
+
+        for (int i = 0; i < num_docs - 1; i++)
+        {
+            if (offsets[i] == -1) 
+            {
+                pos_string += ",";
+                strand_string += ",";
+            }
+            else
+            {
+                pos_string += std::to_string(offsets[i]) + ",";
+                strand_string += strand[i];
+                strand_string += ",";
+            }
+        }
+        if (offsets[num_docs - 1] != -1) 
+        {
+            pos_string += std::to_string(offsets[num_docs - 1]);
+            strand_string += strand[num_docs - 1];
+        }
+        mem_file << std::to_string(length) << '\t' << pos_string << '\t' << strand_string << std::endl;
+    }
+        
+
 private:    
 
     inline size_t update_mems(size_t j, size_t lcp)
@@ -202,7 +254,10 @@ private:
                 !check_bwt_range(interval.first, j-1) && 
                 check_doc_range(interval.first, j-1)) 
                 {
-                    write_mem(interval.second, interval.first, j - 1);
+                    if (mummode)
+                        write_mum(interval.second, interval.first, j - 1);
+                    else
+                        write_mem(interval.second, interval.first, j - 1);
                     count++;
                 }
             start = interval.first;
