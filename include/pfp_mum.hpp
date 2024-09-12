@@ -144,7 +144,7 @@ struct BuildOptions {
             else if (max_mem_freq < 0) {max_mem_freq = num_docs + max_mem_freq;}
 
             // max per doc frequency overrides total frequency
-            if (rare_freq > 0 && max_mem_freq > 0 && (max_mem_freq > rare_freq * num_docs)) {
+            if (rare_freq > 0 && (max_mem_freq == 0 || max_mem_freq > rare_freq * num_docs)) {
                 max_mem_freq = rare_freq * num_docs;
             }
 

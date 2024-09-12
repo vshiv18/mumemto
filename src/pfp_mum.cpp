@@ -262,7 +262,7 @@ void print_build_status_info(BuildOptions& opts, RefBuilder& ref_build, bool mum
     std::fprintf(stderr, "\tMinimum %s length: %d\n", match_type.data(), opts.min_match_len);
     std::fprintf(stderr, "\tInclude reverse complement?: %s\n", opts.use_rcomp ? "True" : "False");
     std::fprintf(stderr, "\tMax occurences per sequence: %d\n", opts.rare_freq);
-    if (opts.max_mem_freq > 0)
+    if (opts.max_mem_freq < opts.rare_freq * ref_build.num_docs)
         std::fprintf(stderr, "\t\t- excluding multi-MEMs that occur more than %d times in total\n", opts.max_mem_freq);
     if (opts.num_distinct_docs == ref_build.num_docs)
         std::fprintf(stderr, "\tfinding multi-%ss present in all genomes\n", match_type.data());
