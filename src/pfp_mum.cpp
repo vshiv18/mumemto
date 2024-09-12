@@ -42,7 +42,6 @@ int build_main(int argc, char** argv) {
     if (build_opts.input_list.length() == 0) {build_opts.input_list = make_filelist(build_opts.files, build_opts.output_prefix);}
 
     RefBuilder ref_build(build_opts.input_list, build_opts.output_prefix, build_opts.use_rcomp);
-
     // normalize and reconcile the input parameters
     build_opts.set_parameters(ref_build.num_docs, mum_mode);
 
@@ -56,9 +55,9 @@ int build_main(int argc, char** argv) {
     DONE_LOG((std::chrono::system_clock::now() - start));
 
     // Make sure that document numbers can be store in 2 bytes
-    if (ref_build.num_docs >= MAXDOCS)
-        FATAL_ERROR("An index cannot be build over %ld documents, "
-                    "please reduce to a max of 65,535 docs.", ref_build.num_docs);
+    // if (ref_build.num_docs >= MAXDOCS)
+    //     FATAL_ERROR("An index cannot be build over %ld documents, "
+    //                 "please reduce to a max of 65,535 docs.", ref_build.num_docs);
 
     // Determine the paths to the BigBWT executables
     HelperPrograms helper_bins;
@@ -234,24 +233,25 @@ int is_dir(std::string path) {
 void print_build_status_info(BuildOptions& opts, RefBuilder& ref_build, bool mum_mode) {
     /* prints out the information being used in the current run */
     std::fprintf(stderr, "\nOverview of Parameters:\n");
-    if (opts.input_list.length())
-        std::fprintf(stderr, "\tInput file-list: %s\n", opts.input_list.data());
-    else if (opts.files.size() > 5) {
-        std::fprintf(stderr, "\tInput files: ");
+    if (opts.files.size() > 5) {
+        std::fprintf(stderr, "\tInput files (N = %d): ", ref_build.num_docs);
         std::fprintf(stderr, "%s,", opts.files.at(0).data());
         std::fprintf(stderr, "%s,", opts.files.at(1).data());
         std::fprintf(stderr, " ... ,", opts.files.at(1).data());
         std::fprintf(stderr, "%s,", opts.files.at(opts.files.size() - 2).data());
         std::fprintf(stderr, "%s\n", opts.files.at(opts.files.size() - 1).data());
     }
-    else {
-        std::fprintf(stderr, "\tInput files: ");
+    else if (opts.files.size() > 0) {
+        std::fprintf(stderr, "\tInput files (N = %d): ", ref_build.num_docs);
         for (int i = 0; i < opts.files.size() - 1; i++)
             {
                 std::fprintf(stderr, "%s,", opts.files.at(i).data());
             }
             std::fprintf(stderr, "%s\n", opts.files.at(opts.files.size() - 1).data());
     }
+    else
+        std::fprintf(stderr, "\tInput file-list (N = %d): %s\n", ref_build.num_docs, opts.input_list.data());
+
     std::string match_type = mum_mode ? "MUM" : "MEM";
     std::fprintf(stderr, "\tOutput ref path: %s\n", opts.output_ref.data());
     if (opts.arrays_in.length() > 0)

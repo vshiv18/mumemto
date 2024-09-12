@@ -67,7 +67,7 @@ struct BuildOptions {
         bool arrays_out = false;
         std::string  arrays_in = "";
         bool keep_temp = false;
-        size_t num_distinct_docs = 0;
+        int num_distinct_docs = 0;
         bool overlap = true;
         bool from_parse = false;
         size_t min_match_len = 20;
@@ -113,7 +113,7 @@ struct BuildOptions {
             3) and max total frequency */
             std::string match_type = mum_mode ? "MUMs" : "MEMs";
             // Set number of unique documents, based on valid ranges
-            if ((num_distinct_docs < -num_docs))
+            if (num_distinct_docs < num_distinct_docs < -static_cast<int>(num_docs))
             {
                 std::string message = "Too few number of sequences, defaulting to multi-" + match_type + " in 2 or more sequences";
                 FORCE_LOG("build_main", message.c_str());
@@ -136,7 +136,7 @@ struct BuildOptions {
             }
 
             // Set max total frequency, based on valid ranges
-            if (max_mem_freq < -num_docs || max_mem_freq == 1)
+            if (max_mem_freq < num_distinct_docs < -static_cast<int>(num_docs) || max_mem_freq == 1)
             {
                 FORCE_LOG("build_main", "Invalid maximum total MEM frequency, defaulting to no upper limit");
                 max_mem_freq = 0;
