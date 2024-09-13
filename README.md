@@ -38,41 +38,13 @@ make install
 
 The basic workflow with `mumemto` is to compute the PFP over a collection of sequences, and identify multi-MUMs while computing the SA/LCP/BWT of the input collection. 
 
-### Find multi-MUMs
-
+### Find multi-MUMs and MEMs
+By default, `mumemto` computes multi-MUMs across a collection, without additional parameters. 
 ```sh
-mumemto mum -o <output_prefix> [input_fasta [...]]
-```
-Alternatively, you can find all multi-MEMs:
-```sh
-mumemto mem -o <output_prefix> [input_fasta [...]]
+mumemto -o <output_prefix> [input_fasta [...]]
 ```
 
-The command above takes in a list of fasta files as positional arguments and then generates output files using the output prefix. Alternatively, you can provide a file-list, which specifies a list of fastas and which document/class each file belongs in. Passing in fastas as positional arguments will auto-generate a filelist that defines the order of the sequences.
-
-Use the `-h` flag to list the options for each mode: `mumemto mum -h`.
-Mumemto mode options enable the computation of various different classes of exact matches:
-<p align="center">
-<img src="img/viz_def.png" alt="visual_guide" width="600" align="center"/>
-</p>
-
-`-k` allows for partial multi-MUM and MEMs (appearing in at least `N-k` sequences) and `--rare k` finds multi-MEMs that appear at most `k` times in each sequences (can be used with `-k` to find rare partial multi-MEMs).
-
-**Format of the \*.mums file:**
-```sh
-[MUM length] [comma-delimited list of offsets within each sequence, in order of filelist] [comma-delimited strand indicators (one of +/-)]
-```
-The `*.mums` file contains each MUM as a separate line, where the first value is the match length, and the second is 
-a comma-delimited list of positions where the match begins in each sequence. An empty entry indicates that the MUM was not found in that sequence (only applicable with *-k* flag). The MUMs are sorted in the output file
-lexicographically based on the match sequence.
-
-**Format of the \*.mems file:**
-```sh
-[MEM length] [comma-delimited list of offsets for each occurence] [comma-delimited list of sequence IDs, as defined in the filelist] [comma-delimited strand indicators (one of +/-)]
-```
-The `*.mems` file contains each MEM as a separate line with the following fields: (1) the match length, (2)
-a comma-delimited list of offsets within a sequence, (3) the corresponding sequence ID for each offset given in (2). The MEMs are sorted in the output file
-lexicographically based on the match sequence.
+The `mumemto` command takes in a list of fasta files as positional arguments and then generates output files using the output prefix. Alternatively, you can provide a file-list, which specifies a list of fastas and which document/class each file belongs in. Passing in fastas as positional arguments will auto-generate a filelist that defines the order of the sequences in the output.
 
 **Example of file-list file:**
 ```sh
@@ -82,6 +54,35 @@ lexicographically based on the match sequence.
 /path/to/staph_2.fna 4
 ```
 
+Use the `-h` flag to list additional options and usage: `mumemto -h`.
+
+Mumemto mode options enable the computation of various different classes of exact matches:
+<p align="center">
+<img src="img/viz_def.png" alt="visual_guide" width="600" align="center"/>
+</p>
+
+The multi-MUM properties can be loosened to find different types of matches with three main flags: 
+- `-k` determines the minimum number of sequences a match must occur in (e.g. for finding MUMs across smaller subsets)
+- `-f` controls the maximum number of occurences in _each_ sequence (e.g. finding duplication regions)
+- `-F` controls the total number of occurences in the collection (e.g. filtering out matches that occur frequently due to low complexity)
+
+**Format of the \*.mums file:**
+```sh
+[MUM length] [comma-delimited list of offsets within each sequence, in order of filelist] [comma-delimited strand indicators (one of +/-)]
+```
+If the maximum number of occurences _per_ sequence is set to 1 (indiciating MUMs), a `*.mums` file is generated. This contains each MUM as a separate line, where the first value is the match length, and the second is 
+a comma-delimited list of positions where the match begins in each sequence. An empty entry indicates that the MUM was not found in that sequence (only applicable with *-k* flag). The MUMs are sorted in the output file
+lexicographically based on the match sequence.
+
+**Format of the \*.mems file:**
+```sh
+[MEM length] [comma-delimited list of offsets for each occurence] [comma-delimited list of sequence IDs, as defined in the filelist] [comma-delimited strand indicators (one of +/-)]
+```
+If more than one occurence is allowed per sequence, the output format is in `*.mems` format. This contains each MEM as a separate line with the following fields: (1) the match length, (2)
+a comma-delimited list of offsets within a sequence, (3) the corresponding sequence ID for each offset given in (2). Similar to above, MEMs are sorted in the output file
+lexicographically based on the match sequence.
+
+
 ## Visualization
 <figure>
 <img src="img/potato_syn_small.png" alt="potato_synteny"/>
@@ -89,8 +90,8 @@ lexicographically based on the match sequence.
 </figure>
 Mumemto can visualize multi-MUMs in a synteny-like format, highlighting conservation and genomic structural diversity within a collection of sequences.
 
-After running `mumemto mum` on a collection of FASTAs, you can generate a visualization using:
+After running `mumemto` on a collection of FASTAs, you can generate a visualization using:
 ```sh
 /path/to/mumemto_repo/analysis/viz_mums.py (-i PREFIX | -m MUMFILE)
 ```
-Use `viz_mums.py -h` to see options for customizability. As of now, only strict and partial multi-MUMs are supported (rare multi-MEM support coming soon).
+Use `viz_mums.py -h` to see options for customizability. As of now, only strict and partial multi-MUMs are supported (rare multi-MEM support coming soon), thus a `*.mums` output is required.
