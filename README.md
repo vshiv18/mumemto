@@ -66,6 +66,8 @@ The multi-MUM properties can be loosened to find different types of matches with
 - `-f` controls the maximum number of occurences in _each_ sequence (e.g. finding duplication regions)
 - `-F` controls the total number of occurences in the collection (e.g. filtering out matches that occur frequently due to low complexity)
 
+`-k` is flexible in input format. The user can specify a positive integer, indicating the minimum number of sequences a match should appear in. Passing a negative integer indicates a subset size relative to N, the number of sequences in the collection (i.e. N - k). For instance, to specify a match must appear in at least all sequences _except_ one, we could pass `-k -1`. Similarly, passing negative values to `-F` specifies limits relative to N. Note: when setting `-F` and `-f` together, the max total limit will be the smaller of `F` and `N * f`.
+
 **Format of the \*.mums file:**
 ```sh
 [MUM length] [comma-delimited list of offsets within each sequence, in order of filelist] [comma-delimited strand indicators (one of +/-)]
