@@ -208,7 +208,14 @@ protected:
             strand[curdoc] = curstrand;
         }
         // temporarory fix: only write MUMs where 1st genome is + stranded
-        if (strand[0] == '-')
+        int i = 0;
+        while (i < num_docs - 1)
+        {
+            if (strand[i] != 0)
+                break;
+            i++;
+        }
+        if (strand[i] == '-')
             return;
 
         for (int i = 0; i < num_docs - 1; i++)
