@@ -55,6 +55,10 @@ def get_polygons(args, mums, genome_lengths, lenfilter=0, offset=0, color=(0.8, 
         inverted = strands[0] == '-'
         points = []
         for idx, (x, strand) in enumerate(zip(starts, strands)):
+            if x == None:
+                if len(points) > 2:
+                    polygons.append(points_to_poly(points[:-1]))
+                    colors.append(color)
             points.append(((centering[idx] + x, idx), (centering[idx] + x + l, idx)) if strand == '+' else ((centering[idx] + genome_lengths[idx] - x - l, idx), (centering[idx] + genome_lengths[idx] - x, idx)))
             if not inverted and strand == '-':
                 inverted = True
@@ -134,7 +138,7 @@ def parse_mums(args):
     for l in open(args.mumfile, 'r').readlines():
         if count % args.subsample == 0:
             l = l.strip().split()
-            yield int(l[0]), tuple([int(v) for v in l[1].split(',')]), tuple(l[2].split(','))
+            yield int(l[0]), tuple([int(v) if v else None for v in l[1].split(',')]), tuple(l[2].split(','))
         count += 1
 if __name__ == "__main__":
     args = parse_arguments()
