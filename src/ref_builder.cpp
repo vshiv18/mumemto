@@ -61,7 +61,9 @@ RefBuilder::RefBuilder(std::string input_data, std::string output_prefix,
         auto word_list = split(line, ' ');
 
         // Make sure the filelist has at least 2 columns (name and doc_id)
-        ASSERT((word_list.size() >= 2), "Input file-list does not have expected structure.");
+        // ASSERT((word_list.size() >= 2), "Input file-list does not have expected structure.");
+        if (word_list.size() == 1)
+            word_list.push_back(std::to_string(curr_id + 1));
 
         if (!is_file(word_list[0])) {
             FATAL_ERROR("The following path in the input list is not valid: %s", word_list[0].data());}
@@ -76,8 +78,11 @@ RefBuilder::RefBuilder(std::string input_data, std::string output_prefix,
             FATAL_ERROR("The first ID in file_list must be 1");
             
         if (std::stoi(word_list[1]) ==  static_cast<int>(curr_id) || std::stoi(word_list[1]) == static_cast<int>(curr_id+1)) {
-            if (std::stoi(word_list[1]) == static_cast<int>(curr_id+1)) {curr_id+=1;}
-            document_ids.push_back(static_cast<size_t>(std::stoi(word_list[1])));
+            if (std::stoi(word_list[1]) == static_cast<int>(curr_id+1)) 
+                {
+                    curr_id+=1;
+                }
+            document_ids.push_back(curr_id);
         } else
             FATAL_ERROR("The IDs in the file_list must be staying constant or increasing by 1.");
         member_num += 1;
