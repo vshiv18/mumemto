@@ -59,6 +59,7 @@ def get_polygons(args, mums, genome_lengths, lenfilter=0, offset=0, color=(0.8, 
                 if len(points) > 2:
                     polygons.append(points_to_poly(points[:-1]))
                     colors.append(color)
+                continue
             points.append(((centering[idx] + x, idx), (centering[idx] + x + l, idx)) if strand == '+' else ((centering[idx] + genome_lengths[idx] - x - l, idx), (centering[idx] + genome_lengths[idx] - x, idx)))
             if not inverted and strand == '-':
                 inverted = True
