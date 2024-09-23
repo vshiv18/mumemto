@@ -275,7 +275,7 @@ std::string make_filelist(std::vector<std::string> files, std::string output_pre
     std::string fname = output_prefix + "_filelist.txt";
     std::ofstream outfile(fname);
     for (size_t i = 0; i < files.size(); ++i) {
-        outfile << files[i] << " " << i + 1 << std::endl;
+        outfile << std::filesystem::absolute(files[i]).string() << " " << i + 1 << std::endl;
     }
     outfile.close();
     return fname;

@@ -130,7 +130,7 @@ protected:
         // return true;
     }
 
-    inline void write_mem(size_t length, size_t start, size_t end)
+    inline size_t write_mem(size_t length, size_t start, size_t end)
     {
         std::string pos = "";
         std::string strand = "";
@@ -182,9 +182,10 @@ protected:
         // }
         // if (min_offset_strand == '+')
             mem_file << std::to_string(length) << '\t' << pos << '\t' << docs << '\t' << strand << std::endl;
+        return 1;
     }
 
-    inline void write_mum(size_t length, size_t start, size_t end)
+    inline size_t write_mum(size_t length, size_t start, size_t end)
     {
         std::vector<size_t> offsets(num_docs, -1);
         std::vector<char> strand(num_docs, 0);
@@ -216,7 +217,7 @@ protected:
             i++;
         }
         if (strand[i] == '-')
-            return;
+            return 0;
 
         for (int i = 0; i < num_docs - 1; i++)
         {
@@ -238,6 +239,7 @@ protected:
             strand_string += strand[num_docs - 1];
         }
         mem_file << std::to_string(length) << '\t' << pos_string << '\t' << strand_string << std::endl;
+        return 1;
     }
         
 
@@ -262,10 +264,9 @@ private:
                 check_doc_range(interval.first, j-1)) 
                 {
                     if (mummode)
-                        write_mum(interval.second, interval.first, j - 1);
+                        count += write_mum(interval.second, interval.first, j - 1);
                     else
-                        write_mem(interval.second, interval.first, j - 1);
-                    count++;
+                        count += write_mem(interval.second, interval.first, j - 1);
                 }
             start = interval.first;
         }
