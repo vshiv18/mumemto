@@ -20,7 +20,7 @@
 #include <vector>
 #include <pfp.hpp>
 #include <pfp_lcp_mum.hpp>
-#include <mem_finder.hpp>
+#include <intra_mem_finder.hpp>
 // #include <mum_finder.hpp>
 #include <getopt.h>
 #include <queue>
@@ -77,7 +77,7 @@ int build_main(int argc, char** argv) {
         file_lcp input_lcp(build_opts.arrays_in, &ref_build);
         start = std::chrono::system_clock::now();
         STATUS_LOG("build_main", "finding multi-%ss from pfp", mum_mode ? "MUM" : "MEM");
-        mem_finder match_finder(build_opts.output_prefix, ref_build, build_opts.min_match_len, build_opts.num_distinct_docs, build_opts.rare_freq, build_opts.max_mem_freq);
+        mem_finder match_finder(build_opts.output_prefix, ref_build, build_opts.min_match_len, build_opts.max_mem_freq);
         input_lcp.process(match_finder);
         match_finder.close();
         input_lcp.close();
@@ -113,7 +113,7 @@ int build_main(int argc, char** argv) {
 
     STATUS_LOG("build_main", "finding multi-%ss from pfp", mum_mode ? "MUM" : "MEM");
     // std::string filename, RefBuilder& ref_build, size_t min_mem_len, size_t num_distinct, int max_doc_freq, int max_total_freq
-    mem_finder match_finder(build_opts.output_prefix, ref_build, build_opts.min_match_len, build_opts.num_distinct_docs, build_opts.rare_freq, build_opts.max_mem_freq);
+    mem_finder match_finder(build_opts.output_prefix, ref_build, build_opts.min_match_len, build_opts.max_mem_freq);
     count = lcp.process(match_finder);
     match_finder.close();
     lcp.close();
@@ -261,13 +261,13 @@ void print_build_status_info(BuildOptions& opts, RefBuilder& ref_build, bool mum
     if (opts.arrays_out) {std::fprintf(stderr, "\tWriting LCP, BWT and suffix arrays\n");}
     std::fprintf(stderr, "\tMinimum %s length: %d\n", match_type.data(), opts.min_match_len);
     std::fprintf(stderr, "\tInclude reverse complement?: %s\n", opts.use_rcomp ? "True" : "False");
-    std::fprintf(stderr, "\tMax occurences per sequence: %d\n", opts.rare_freq);
-    if (opts.max_mem_freq < opts.rare_freq * ref_build.num_docs)
-        std::fprintf(stderr, "\t\t- excluding multi-MEMs that occur more than %d times in total\n", opts.max_mem_freq);
-    if (opts.num_distinct_docs == ref_build.num_docs)
-        std::fprintf(stderr, "\tfinding multi-%ss present in all genomes\n", match_type.data());
-    else
-        std::fprintf(stderr, "\tfinding multi-%ss present in %d genomes\n", match_type.data(), opts.num_distinct_docs);
+    // std::fprintf(stderr, "\tMax occurences per sequence: %d\n", opts.rare_freq);
+    // if (opts.max_mem_freq < opts.rare_freq * ref_build.num_docs)
+    //     std::fprintf(stderr, "\t\t- excluding multi-MEMs that occur more than %d times in total\n", opts.max_mem_freq);
+    // if (opts.num_distinct_docs == ref_build.num_docs)
+    //     std::fprintf(stderr, "\tfinding multi-%ss present in all genomes\n", match_type.data());
+    // else
+    //     std::fprintf(stderr, "\tfinding multi-%ss present in %d genomes\n", match_type.data(), opts.num_distinct_docs);
     std::fprintf(stderr, "\n");
 }
 

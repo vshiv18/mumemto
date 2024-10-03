@@ -113,27 +113,27 @@ struct BuildOptions {
             3) and max total frequency */
             std::string match_type = mum_mode ? "MUMs" : "MEMs";
             // Set number of unique documents, based on valid ranges
-            if (num_distinct_docs < -static_cast<int>(num_docs))
-            {
-                std::string message = "Too few number of sequences, defaulting to multi-" + match_type + " in 2 or more sequences";
-                FORCE_LOG("build_main", message.c_str());
-                num_distinct_docs = 2;
-            }
-            else if (num_distinct_docs <= 0) {num_distinct_docs = num_docs + num_distinct_docs;}
-            else if (num_distinct_docs == 1)
-            {
-                std::string match_type = mum_mode ? "MUMs" : "MEMs";
-                std::string message = "Too few number of sequences, defaulting to multi-" + match_type + " in 2 or more sequences";
-                FORCE_LOG("build_main", message.c_str());
-                num_distinct_docs = 2;
-            }
-            else if (num_distinct_docs >= num_docs)
-            {
-                std::string match_type = mum_mode ? "MUMs" : "MEMs";
-                std::string message = "Too large number of sequences, defaulting to multi-" + match_type + " in all sequences";
-                FORCE_LOG("build_main", message.c_str());
-                num_distinct_docs = num_docs;
-            }
+            // if (num_distinct_docs < -static_cast<int>(num_docs))
+            // {
+            //     std::string message = "Too few number of sequences, defaulting to multi-" + match_type + " in 2 or more sequences";
+            //     FORCE_LOG("build_main", message.c_str());
+            //     num_distinct_docs = 2;
+            // }
+            // else if (num_distinct_docs <= 0) {num_distinct_docs = num_docs + num_distinct_docs;}
+            // else if (num_distinct_docs == 1)
+            // {
+            //     std::string match_type = mum_mode ? "MUMs" : "MEMs";
+            //     std::string message = "Too few number of sequences, defaulting to multi-" + match_type + " in 2 or more sequences";
+            //     FORCE_LOG("build_main", message.c_str());
+            //     num_distinct_docs = 2;
+            // }
+            // else if (num_distinct_docs >= num_docs)
+            // {
+            //     std::string match_type = mum_mode ? "MUMs" : "MEMs";
+            //     std::string message = "Too large number of sequences, defaulting to multi-" + match_type + " in all sequences";
+            //     FORCE_LOG("build_main", message.c_str());
+            //     num_distinct_docs = num_docs;
+            // }
 
             // Set max total frequency, based on valid ranges
             if (max_mem_freq < -static_cast<int>(num_docs) || max_mem_freq == 1)
@@ -143,10 +143,10 @@ struct BuildOptions {
             }
             else if (max_mem_freq < 0) {max_mem_freq = num_docs + max_mem_freq;}
 
-            // max per doc frequency overrides total frequency
-            if (rare_freq > 0 && (max_mem_freq == 0 || max_mem_freq > rare_freq * num_docs)) {
-                max_mem_freq = rare_freq * num_docs;
-            }
+            // // max per doc frequency overrides total frequency
+            // if (rare_freq > 0 && (max_mem_freq == 0 || max_mem_freq > rare_freq * num_docs)) {
+            //     max_mem_freq = rare_freq * num_docs;
+            // }
 
         }
 };

@@ -90,8 +90,8 @@ RefBuilder::RefBuilder(std::string input_data, std::string output_prefix,
     
     // Make sure we have parsed each line, and it has multiple groups
     ASSERT((document_ids.size() == input_files.size()), "Issue with file-list parsing occurred.");
-    if (document_ids.back() == 1) {
-        FATAL_ERROR("Multiple FASTA inputs required. Perhaps split a multi-FASTA into multiple files?");}
+    // if (document_ids.back() == 1) {
+    //     FATAL_ERROR("Multiple FASTA inputs required. Perhaps split a multi-FASTA into multiple files?");}
 
     this->num_docs = curr_id;
 }
